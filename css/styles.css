@@ -1,0 +1,1239 @@
+/* ============================================================
+   PADDOCK CAR CENTER — estilos
+   Paleta: cobalto (fachada) + ámbar (acento)
+   Tipografía: Saira Condensed (títulos) + Inter (cuerpo)
+   ============================================================ */
+
+:root {
+  --cobalto:        #1442C8;
+  --cobalto-osc:    #0E3299;
+  --cobalto-claro:  #2F5AF0;
+  --ambar:          #F5A623;
+  --ambar-osc:      #B87411;
+
+  --bg:      #F4F5F7;
+  --surface: #FFFFFF;
+  --border:  #E4E7EC;
+  --border-fuerte: #D0D5DD;
+
+  --texto:   #101828;
+  --texto-2: #667085;
+  --texto-3: #98A2B3;
+
+  --ok:    #12B76A;
+  --error: #D92D20;
+
+  --radio: 10px;
+  --sombra: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.08);
+
+  --nav-h: 52px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--texto);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: .01em;
+  margin: 0;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  border-radius: var(--radio);
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, transform .04s;
+  line-height: 1;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 3px solid var(--cobalto-claro); outline-offset: 2px; }
+
+.btn-primary { background: var(--cobalto); color: #fff; }
+.btn-primary:hover { background: var(--cobalto-osc); }
+
+.btn-accent { background: var(--ambar); color: #3d2708; }
+.btn-accent:hover { background: #e0961a; }
+
+.btn-ghost { background: transparent; color: var(--texto); border-color: var(--border-fuerte); }
+.btn-ghost:hover { background: var(--bg); }
+
+.btn-danger { background: transparent; color: var(--error); border-color: #FDA29B; }
+.btn-danger:hover { background: #FEF3F2; }
+
+.btn-sm { padding: 6px 12px; font-size: 14px; }
+.btn-block { width: 100%; }
+
+/* ---------- Login ---------- */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(120% 80% at 50% -10%, #1c50e0 0%, var(--cobalto) 45%, var(--cobalto-osc) 100%);
+}
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 50px rgba(8,25,80,.35);
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.brand-mark { width: 40px; height: 48px; display: block; }
+.brand-mark.sm { width: 26px; height: 31px; }
+.brand-name {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: .95;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
+.brand-sub {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--ambar-osc);
+}
+.login-error {
+  color: var(--error);
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+/* ---------- Campos ---------- */
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--texto-2);
+  margin-bottom: 6px;
+}
+input[type=text], input[type=password], input[type=email],
+input[type=number], input[type=tel], select, textarea {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-fuerte);
+  border-radius: var(--radio);
+  background: #fff;
+  color: var(--texto);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--cobalto);
+  box-shadow: 0 0 0 3px rgba(20,66,200,.12);
+}
+textarea { resize: vertical; min-height: 70px; }
+
+/* ---------- Topbar ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background: var(--cobalto);
+  color: #fff;
+}
+.topbar-brand { display: flex; align-items: center; gap: 8px; }
+.topbar-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.topbar-user { display: flex; align-items: center; gap: 12px; }
+.user-label { font-size: 14px; opacity: .9; }
+.topbar .btn-ghost { color: #fff; border-color: rgba(255,255,255,.35); }
+.topbar .btn-ghost:hover { background: rgba(255,255,255,.12); }
+
+/* ---------- Nav principal ---------- */
+.mainnav {
+  position: sticky;
+  top: 56px;
+  z-index: 15;
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.mainnav a {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--texto-2);
+  text-decoration: none;
+  padding: 14px 14px 12px;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+.mainnav a:hover { color: var(--texto); }
+.mainnav a.active {
+  color: var(--cobalto);
+  border-bottom-color: var(--ambar);
+}
+
+/* ---------- Vista ---------- */
+.view { max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
+
+.view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.view-head h1 { font-size: 28px; }
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.search {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* ---------- Card / lista ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.list-row:last-child { border-bottom: none; }
+.list-row-main { min-width: 0; }
+.list-row-title { font-weight: 600; font-size: 15px; }
+.list-row-sub { color: var(--texto-2); font-size: 13px; margin-top: 2px; }
+.list-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.patente-tag {
+  display: inline-block;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: .06em;
+  background: var(--texto);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* ---------- Estados vacíos / carga ---------- */
+.empty, .loading {
+  text-align: center;
+  color: var(--texto-2);
+  padding: 48px 20px;
+}
+.empty-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--texto);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16,24,40,.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 40;
+  padding: 0;
+}
+.modal {
+  background: var(--surface);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 16px 16px 0 0;
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: slideup .18s ease;
+}
+@keyframes slideup { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--surface);
+}
+.modal-head h2 { font-size: 22px; }
+.modal-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 24px; line-height: 1; color: var(--texto-2); padding: 0 4px;
+}
+.modal-body { padding: 20px; }
+.modal-foot {
+  display: flex; gap: 10px; padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  position: sticky; bottom: 0; background: var(--surface);
+}
+.modal-foot .btn { flex: 1; }
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1; }
+
+/* ---------- Toast ---------- */
+.toast-container {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(100% - 32px);
+  max-width: 400px;
+}
+.toast {
+  background: var(--texto);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: var(--radio);
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(16,24,40,.25);
+  animation: toastin .2s ease;
+}
+.toast.ok    { background: #05603A; }
+.toast.error { background: #912018; }
+@keyframes toastin { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- Desktop ---------- */
+@media (min-width: 640px) {
+  .modal-overlay { align-items: center; }
+  .modal { border-radius: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+[hidden] { display: none !important; }
+
+/* ============================================================
+   Ficha del vehículo (detalle + historial)
+   ============================================================ */
+.clickable { cursor: pointer; }
+.clickable:hover .list-row-title { color: var(--cobalto); }
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.back-link {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  color: var(--cobalto);
+  cursor: pointer;
+  padding: 6px 0;
+}
+.back-link:hover { color: var(--cobalto-osc); }
+.detail-actions { display: flex; gap: 8px; }
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.patente-tag.lg { font-size: 22px; padding: 4px 12px; letter-spacing: .08em; }
+.detail-desc {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--texto);
+}
+
+.section-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--texto-2);
+  margin: 24px 0 10px;
+}
+
+.detail-card { padding: 4px 4px; }
+.kv-row {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.kv-row:last-child { border-bottom: none; }
+.kv-label {
+  flex: 0 0 120px;
+  color: var(--texto-2);
+  font-size: 14px;
+}
+.kv-val { flex: 1; font-weight: 500; word-break: break-word; }
+.kv-actions { display: flex; gap: 8px; padding: 14px 16px; }
+.muted { color: var(--texto-2); padding: 16px; }
+
+.hist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.hist-row:last-child { border-bottom: none; }
+.hist-tipo {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .06em;
+  color: var(--cobalto);
+}
+.hist-desc { color: var(--texto-2); font-size: 14px; margin-top: 2px; }
+.hist-right { text-align: right; flex-shrink: 0; }
+.hist-total { font-weight: 600; }
+.hist-fecha { color: var(--texto-3); font-size: 13px; margin-top: 2px; }
+
+/* ============================================================
+   Repuestos y stock
+   ============================================================ */
+.alerta-stock {
+  background: #FFFAEB;
+  border: 1px solid #FEC84B;
+  color: #B54708;
+  border-radius: var(--radio);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.repuesto-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.repuesto-meta .precio {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--texto);
+}
+
+.stock-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  line-height: 1.1;
+}
+.stock-badge .stock-num { font-family: 'Saira Condensed', sans-serif; font-weight: 700; font-size: 18px; }
+.stock-badge .stock-txt { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+.stock-badge.ok   { background: #ECFDF3; color: #027A48; }
+.stock-badge.bajo { background: #FFFAEB; color: #B54708; }
+.stock-badge.sin  { background: #FEF3F2; color: #B42318; }
+
+.stock-actual {
+  background: var(--bg);
+  border-radius: var(--radio);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+.stock-actual strong { font-family: 'Saira Condensed', sans-serif; font-size: 20px; }
+
+/* En pantallas chicas, la meta de repuestos se acomoda */
+@media (max-width: 560px) {
+  .list-row { flex-wrap: wrap; }
+  .repuesto-meta { order: 3; width: 100%; justify-content: flex-start; margin-top: 6px; }
+}
+
+/* ============================================================
+   Venta de mostrador
+   ============================================================ */
+.venta-buscador { position: relative; margin-bottom: 16px; }
+.venta-resultados {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.busq-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+.busq-item:hover { border-color: var(--cobalto); background: #F8FAFF; }
+.busq-nombre { font-weight: 600; }
+.busq-sub { font-size: 13px; color: var(--texto-2); margin-top: 2px; }
+.busq-precio {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.busq-vacio { color: var(--texto-2); padding: 10px 14px; font-size: 14px; }
+
+.venta-carrito { margin-bottom: 16px; padding: 4px; }
+.carrito-vacio { color: var(--texto-2); padding: 24px 16px; text-align: center; }
+.carrito-linea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.carrito-linea:last-child { border-bottom: none; }
+.cl-nombre { flex: 1; font-weight: 500; min-width: 0; }
+.cl-aviso { color: var(--error); font-size: 12px; font-weight: 500; }
+.input-cant { width: 56px; text-align: center; padding: 6px !important; }
+.cl-precio { display: flex; align-items: center; gap: 4px; }
+.cl-x { color: var(--texto-3); }
+.input-precio { width: 80px; padding: 6px !important; }
+.cl-subtotal {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  min-width: 80px;
+  text-align: right;
+}
+.cl-quitar {
+  background: none; border: none; cursor: pointer;
+  font-size: 22px; line-height: 1; color: var(--texto-3);
+  padding: 0 4px;
+}
+.cl-quitar:hover { color: var(--error); }
+
+.venta-pie { padding: 16px; }
+.venta-total-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 4px;
+  margin: 8px 0 14px;
+  border-top: 2px solid var(--border);
+}
+.vt-label {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.vt-monto {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--cobalto);
+}
+
+@media (max-width: 560px) {
+  .carrito-linea { flex-wrap: wrap; }
+  .cl-nombre { flex: 1 1 100%; }
+}
+
+/* ============================================================
+   Importar repuestos
+   ============================================================ */
+.head-actions { display: flex; gap: 8px; }
+
+.imp-texto { color: var(--texto-2); font-size: 14px; margin: 0 0 14px; }
+.imp-plantilla { margin-bottom: 16px; }
+.imp-drop {
+  display: block;
+  text-align: center;
+  padding: 20px;
+  border: 2px dashed var(--border-fuerte);
+  border-radius: var(--radio);
+  cursor: pointer;
+  color: var(--texto-2);
+}
+.imp-drop:hover { border-color: var(--cobalto); color: var(--cobalto); }
+.imp-drop strong { color: var(--texto); }
+#imp-input { display: none; }
+
+.imp-resumen { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.imp-chip {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.imp-chip.nuevo  { background: #ECFDF3; color: #027A48; }
+.imp-chip.existe { background: #FFFAEB; color: #B54708; }
+.imp-chip.error  { background: #FEF3F2; color: #B42318; }
+
+.imp-errores {
+  background: #FEF3F2; border-radius: var(--radio);
+  padding: 10px 14px; margin: 12px 0; font-size: 13px; color: #B42318;
+}
+.imp-errores strong { display: block; margin-bottom: 4px; }
+
+.imp-tabla { margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radio); overflow: hidden; }
+.imp-tr {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.imp-tr:last-child { border-bottom: none; }
+.imp-td-nombre { font-weight: 500; }
+.imp-mas { padding: 8px 12px; color: var(--texto-2); font-size: 13px; text-align: center; }
+
+/* ============================================================
+   Compras / cuentas por pagar
+   ============================================================ */
+.deuda-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--cobalto);
+  color: #fff;
+  border-radius: var(--radio);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.deuda-label {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.deuda-monto {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+}
+
+.compra-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.compra-total { font-family: 'Saira Condensed', sans-serif; font-weight: 700; font-size: 18px; }
+.compra-saldo { font-size: 12px; color: var(--texto-2); }
+
+.estado-chip {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 2px 10px;
+  border-radius: 20px;
+  margin-top: 2px;
+}
+.estado-chip.pendiente { background: #FEF3F2; color: #B42318; }
+.estado-chip.parcial   { background: #FFFAEB; color: #B54708; }
+.estado-chip.pagada    { background: #ECFDF3; color: #027A48; }
+
+.sublabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--texto-2);
+  margin-bottom: 8px;
+}
+.compra-item-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 90px 28px;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.compra-item-row .ci-cant, .compra-item-row .ci-precio { padding: 8px !important; text-align: center; }
+.compra-total-calc {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  text-align: right;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================================
+   Compras — tarjetas por proveedor y cuenta corriente
+   ============================================================ */
+.prov-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.prov-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color .12s, transform .04s;
+}
+.prov-card:hover { border-color: var(--cobalto); }
+.prov-card:active { transform: translateY(1px); }
+.prov-card-nombre {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prov-card-saldo {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--error);
+  line-height: 1;
+}
+.prov-card.al-dia .prov-card-saldo { color: var(--ok); font-size: 22px; }
+.prov-card-sub { font-size: 13px; color: var(--texto-2); margin-top: 4px; }
+
+.cuenta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.cuenta-nombre {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  text-transform: uppercase;
+}
+.cuenta-saldo { text-align: right; }
+.cs-label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--texto-2);
+}
+.cs-monto {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--cobalto);
+}
+
+/* ============================================================
+   Registrar pago
+   ============================================================ */
+.pago-lista { border: 1px solid var(--border); border-radius: var(--radio); overflow: hidden; margin-bottom: 12px; }
+.pago-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.pago-fila:last-child { border-bottom: none; }
+.pago-chk { display: flex; align-items: center; }
+.pago-chk input { width: 20px; height: 20px; }
+.pago-info { flex: 1; min-width: 0; }
+.pago-fac { font-weight: 500; font-size: 14px; }
+.pago-saldo { font-size: 12px; color: var(--texto-2); }
+.pago-monto { width: 100px; padding: 8px !important; text-align: right; }
+.pago-total-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 4px;
+  margin-bottom: 12px;
+  border-top: 2px solid var(--border);
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+}
+#pago-total { color: var(--cobalto); font-size: 24px; }
+
+/* ============================================================
+   Orden de pago (documento imprimible)
+   ============================================================ */
+.orden-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.orden-doc {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radio);
+  padding: 32px;
+  max-width: 640px;
+  margin: 0 auto;
+  color: #101828;
+}
+.od-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--cobalto);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+.od-brand-name {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: .9;
+  color: var(--cobalto);
+}
+.od-brand-sub {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: .3em;
+  color: var(--ambar-osc);
+  text-transform: uppercase;
+}
+.od-title { text-align: right; }
+.od-title-txt {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+.od-numero { font-family: 'Saira Condensed', sans-serif; font-weight: 700; font-size: 24px; color: var(--cobalto); }
+.od-datos { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; font-size: 14px; }
+.od-lbl { color: var(--texto-2); }
+.od-facturas { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+.od-facturas-tit {
+  background: var(--bg);
+  padding: 8px 14px;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: .03em;
+}
+.od-fila {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.od-monto { font-weight: 600; }
+.od-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--cobalto);
+  color: #fff;
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: .03em;
+}
+.od-total-monto { font-weight: 700; font-size: 24px; }
+.od-notas { margin-top: 16px; font-size: 13px; color: var(--texto-2); }
+.od-firma { margin-top: 48px; text-align: center; }
+.od-firma-linea { border-top: 1px solid #101828; width: 240px; margin: 0 auto 6px; }
+.od-firma-txt { font-size: 12px; color: var(--texto-2); }
+
+/* ---------- Impresión: solo la orden ---------- */
+@media print {
+  .topbar, .mainnav, .orden-acciones, .toast-container, .no-print { display: none !important; }
+  body, .app, .view { background: #fff !important; }
+  .view { padding: 0 !important; max-width: none !important; }
+  .orden-doc { border: none; box-shadow: none; max-width: none; padding: 0; }
+}
+
+/* ============================================================
+   Caja
+   ============================================================ */
+.caja-periodo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.caja-modos { display: flex; gap: 6px; }
+.caja-rango { display: flex; align-items: center; gap: 8px; }
+.caja-rango input { width: auto; }
+.caja-periodo input[type=date] { width: auto; }
+.rango-sep { color: var(--texto-2); }
+
+.caja-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.caja-card {
+  border-radius: var(--radio);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.caja-card.ingreso { background: #ECFDF3; }
+.caja-card.egreso  { background: #FEF3F2; }
+.caja-card.saldo   { background: var(--cobalto); }
+.cc-lbl {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+}
+.caja-card.ingreso .cc-lbl { color: #027A48; }
+.caja-card.egreso .cc-lbl { color: #B42318; }
+.caja-card.saldo .cc-lbl { color: rgba(255,255,255,.85); }
+.cc-val { font-family: 'Saira Condensed', sans-serif; font-weight: 700; font-size: 24px; }
+.caja-card.ingreso .cc-val { color: #027A48; }
+.caja-card.egreso .cc-val { color: #B42318; }
+.caja-card.saldo .cc-val { color: #fff; }
+
+.caja-medios {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.caja-medio {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+.cm-nombre { text-transform: capitalize; color: var(--texto-2); }
+.cm-val { font-family: 'Saira Condensed', sans-serif; font-weight: 700; }
+
+.caja-monto {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.caja-monto.ing { color: #027A48; }
+.caja-monto.egr { color: #B42318; }
+
+@media (max-width: 560px) {
+  .caja-cards { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Reportes (documento imprimible)
+   ============================================================ */
+.reporte-doc {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radio);
+  padding: 32px;
+  max-width: 720px;
+  margin: 0 auto;
+  color: #101828;
+}
+.rep-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--cobalto);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+.rep-title { text-align: right; }
+.rep-fecha { color: var(--texto-2); font-size: 13px; margin-top: 4px; }
+.rep-total {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--cobalto);
+}
+.rep-cliente {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rep-cliente:last-child { border-bottom: none; }
+.rep-cli-nombre { font-weight: 600; font-size: 16px; }
+.rep-cli-contacto { color: var(--texto-2); font-size: 13px; margin-top: 2px; }
+.rep-cli-veh { margin-top: 6px; font-size: 14px; }
+.rep-veh-item { padding: 1px 0; }
+
+@media print {
+  .reporte-doc { border: none; box-shadow: none; max-width: none; padding: 0; }
+  .rep-cliente { break-inside: avoid; }
+}
+
+/* ---------- Reporte de proveedores ---------- */
+.rep-prov-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rep-prov-saldo {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--error);
+}
+.rep-fac-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 0;
+  font-size: 14px;
+}
+.rep-fac-saldo { font-weight: 600; }
+
+/* ---------- Filtros de vehículos ---------- */
+.filtros-veh {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filtros-veh select { width: auto; }
+.filtro-fecha { display: flex; align-items: center; gap: 6px; }
+.filtro-fecha input[type=date] { width: auto; }
+.ff-lbl { font-size: 13px; color: var(--texto-2); }
+
+/* ---------- Reporte con tabla ---------- */
+.rep-tabla { margin-top: 8px; }
+.rep-tr {
+  display: grid;
+  grid-template-columns: 100px 1fr 1fr;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.rep-th {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .03em;
+  color: var(--texto-2);
+}
+.rep-pat { font-family: 'Saira Condensed', sans-serif; font-weight: 700; letter-spacing: .04em; }
+
+@media print {
+  .rep-tr { break-inside: avoid; }
+}
+
+/* ---------- Reportes: resumen y tablas extra ---------- */
+.rep-resumen {
+  background: var(--bg);
+  border-radius: var(--radio);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+.rep-tr4 { grid-template-columns: 2fr 1fr 1fr 1fr; }
+.rep-alerta { color: var(--error); font-weight: 600; }
+.rep-ing { color: #027A48; font-weight: 600; }
+.rep-egr { color: #B42318; font-weight: 600; }
+
+/* ============================================================
+   Taller — orden de trabajo
+   ============================================================ */
+.orden-veh-sel {
+  background: var(--bg);
+  border-radius: var(--radio);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.orden-repuestos { margin: 8px 0; }
+.input-mano { width: 140px !important; }
+.orden-total {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  text-align: right;
+  color: var(--cobalto);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 2px solid var(--border);
+}
+.estado-chip.pagada { background: #ECFDF3; color: #027A48; }
+
+/* ============================================================
+   Taller — checklist de control
+   ============================================================ */
+.chk-seccion {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  font-size: 14px;
+  color: var(--cobalto);
+  background: var(--bg);
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+}
+.chk-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+}
+.chk-item { font-size: 14px; flex: 1; }
+.chk-btns { display: flex; gap: 4px; flex-shrink: 0; }
+.chk-btn {
+  width: 34px; height: 32px;
+  border: 1px solid var(--border-fuerte);
+  background: #fff;
+  border-radius: 8px;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--texto-3);
+}
+.chk-btn.activo.chk-bien    { background: #ECFDF3; border-color: #12B76A; color: #027A48; }
+.chk-btn.activo.chk-regular { background: #FFFAEB; border-color: #F5A623; color: #B54708; }
+.chk-btn.activo.chk-mal     { background: #FEF3F2; border-color: #F04438; color: #B42318; }
+
+/* ============================================================
+   Ficha de service (checklist + QR)
+   ============================================================ */
+.fs-chk { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.fs-sec {
+  background: var(--bg);
+  padding: 6px 14px;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: .03em;
+  color: var(--cobalto);
+}
+.fs-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.fs-estado {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+.fs-estado.bien    { background: #ECFDF3; color: #027A48; }
+.fs-estado.regular { background: #FFFAEB; color: #B54708; }
+.fs-estado.mal     { background: #FEF3F2; color: #B42318; }
+
+.fs-qr { text-align: center; margin-top: 28px; }
+.fs-qr img { display: inline-block; }
+.fs-qr-txt { font-size: 12px; color: var(--texto-2); margin-top: 6px; }
+.fs-pie {
+  text-align: center;
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  color: var(--texto-2);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 13px;
+}
+
+@media print {
+  .fs-item, .fs-sec { break-inside: avoid; }
+}

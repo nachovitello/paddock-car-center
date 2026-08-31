@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha de Service — Paddock Car Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { background: #F4F5F7; padding: 20px 12px 60px; }
+    .fs-wrap { max-width: 720px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="fs-wrap" id="cont">
+    <div class="loading">Cargando ficha…</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    (function () {
+      const db = window.PADDOCK.db;
+      const cont = document.getElementById('cont');
+
+      function fmtMoneda(n) { return '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 }); }
+      function fmtFecha(iso) { return iso ? new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
+      function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+      function estadoTxt(e) { return e === 'bien' ? 'Bien' : (e === 'regular' ? 'Regular' : 'Mal'); }
+
+      function grupos(estados) {
+        const g = {};
+        Object.entries(estados || {}).forEach(([k, v]) => {
+          const p = k.split('::'); const sec = p[0], item = p[1];
+          if (!g[sec]) g[sec] = [];
+          g[sec].push({ item, estado: v });
+        });
+        return g;
+      }
+
+      async function cargar() {
+        const id = new URLSearchParams(location.search).get('orden');
+        if (!id) { cont.innerHTML = '<div class="empty"><div class="empty-title">Ficha no encontrada</div></div>'; return; }
+
+        const { data: o } = await db.from('operaciones')
+          .select('*, vehiculos(patente, marca, modelo, anio), clientes(nombre)')
+          .eq('id', id).maybeSingle();
+        if (!o) { cont.innerHTML = '<div class="empty"><div class="empty-title">Ficha no encontrada</div></div>'; return; }
+
+        const { data: items } = await db.from('operacion_items').select('*').eq('operacion_id', id);
+        render(o, items || []);
+      }
+
+      function render(o, items) {
+        const v = o.vehiculos || {}, c = o.clientes || {};
+        const chk = o.checklist || {};
+        const g = grupos(chk.estados);
+        const repuestos = items.filter(i => i.tipo_item === 'producto');
+        const mano = items.filter(i => i.tipo_item === 'mano_obra');
+
+        let html = '<div class="reporte-doc">';
+        html += '<div class="rep-head"><div class="od-brand"><div class="od-brand-name">PADDOCK</div><div class="od-brand-sub">Car Center</div></div>' +
+                '<div class="rep-title"><div class="od-title-txt">Ficha de Service</div><div class="rep-fecha">' + fmtFecha(o.creado_en) + '</div></div></div>';
+
+        html += '<div class="od-datos">';
+        html += '<div><span class="od-lbl">Vehículo: </span><strong>' + esc(v.patente || '—') + '</strong> ' + esc([v.marca, v.modelo, v.anio].filter(Boolean).join(' ')) + '</div>';
+        if (c.nombre) html += '<div><span class="od-lbl">Cliente: </span>' + esc(c.nombre) + '</div>';
+        if (o.km_ingreso) html += '<div><span class="od-lbl">Kilometraje: </span>' + Number(o.km_ingreso).toLocaleString('es-AR') + ' km</div>';
+        if (chk.motivo) html += '<div><span class="od-lbl">Motivo: </span>' + esc(chk.motivo) + '</div>';
+        html += '</div>';
+
+        // Checklist
+        const secs = Object.keys(g);
+        if (secs.length) {
+          html += '<h2 class="section-title">Control del vehículo</h2><div class="fs-chk">';
+          secs.forEach(sec => {
+            html += '<div class="fs-sec">' + esc(sec) + '</div>';
+            g[sec].forEach(it => {
+              html += '<div class="fs-item"><span>' + esc(it.item) + '</span><span class="fs-estado ' + it.estado + '">' + estadoTxt(it.estado) + '</span></div>';
+            });
+          });
+          html += '</div>';
+        }
+
+        if (chk.observaciones) html += '<h2 class="section-title">Observaciones</h2><div class="muted">' + esc(chk.observaciones) + '</div>';
+
+        // Repuestos y mano de obra
+        if (repuestos.length || mano.length) {
+          html += '<h2 class="section-title">Trabajo realizado</h2><div class="od-facturas">';
+          repuestos.forEach(r => {
+            html += '<div class="od-fila"><div>' + esc(r.descripcion) + ' x' + r.cantidad + '</div><div class="od-monto">' + fmtMoneda(r.subtotal) + '</div></div>';
+          });
+          mano.forEach(m => {
+            html += '<div class="od-fila"><div>' + esc(m.descripcion) + '</div><div class="od-monto">' + fmtMoneda(m.subtotal) + '</div></div>';
+          });
+          html += '</div>';
+          html += '<div class="od-total"><span>TOTAL</span><span class="od-total-monto">' + fmtMoneda(o.total) + '</span></div>';
+        }
+
+        html += '<div class="fs-pie">Gracias por confiar en Paddock Car Center</div>';
+        html += '</div>';
+        cont.innerHTML = html;
+      }
+
+      cargar();
+    })();
+  </script>
+</body>
+</html>
