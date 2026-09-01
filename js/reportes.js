@@ -423,7 +423,7 @@
     const { ini, fin } = limitesISO(desde, hasta);
     const { data } = await db.from('operaciones')
       .select('id, creado_en, total, clientes(nombre)')
-      .eq('tipo', 'venta').gte('creado_en', ini).lt('creado_en', fin)
+      .eq('tipo', 'venta').neq('estado', 'anulada').gte('creado_en', ini).lt('creado_en', fin)
       .order('creado_en', { ascending: false });
     return data || [];
   }

@@ -153,8 +153,16 @@
 
     const cuerpo = el('div', {}, [
       el('div', { class: 'field' }, [ el('label', { for: 'c-prov' }, 'Proveedor'), el('select', { id: 'c-prov' }, opcProv) ]),
+      el('div', { class: 'field' }, [ el('label', { for: 'c-tipo' }, 'Tipo de comprobante'), el('select', { id: 'c-tipo' }, [
+        el('option', { value: 'Factura A' }, 'Factura A'),
+        el('option', { value: 'Factura B' }, 'Factura B'),
+        el('option', { value: 'Factura C' }, 'Factura C'),
+        el('option', { value: 'Factura M' }, 'Factura M'),
+        el('option', { value: 'Nota de crédito' }, 'Nota de crédito'),
+        el('option', { value: 'Nota de débito' }, 'Nota de débito')
+      ]) ]),
       el('div', { class: 'field-row' }, [
-        el('div', { class: 'field' }, [ el('label', { for: 'c-numero' }, 'N° de factura'), el('input', { id: 'c-numero', type: 'text' }) ]),
+        el('div', { class: 'field' }, [ el('label', { for: 'c-numero' }, 'N° de comprobante'), el('input', { id: 'c-numero', type: 'text' }) ]),
         el('div', { class: 'field' }, [ el('label', { for: 'c-fecha' }, 'Fecha'), el('input', { id: 'c-fecha', type: 'date', value: hoy }) ])
       ]),
       el('div', { class: 'field' }, [ el('label', { for: 'c-condicion' }, 'Condición'), selCondicion ]),
@@ -199,6 +207,7 @@
         const { data: compra, error: e1 } = await db.from('compras').insert({
           proveedor_id,
           numero: document.getElementById('c-numero').value.trim() || null,
+          tipo_comprobante: document.getElementById('c-tipo').value,
           fecha: document.getElementById('c-fecha').value || hoy,
           total,
           afecta_stock: afecta,
@@ -389,7 +398,7 @@
     compras.forEach(c => {
       const est = estadoDe(c);
       const s = saldoDe(c);
-      const sub = [c.numero ? 'N° ' + c.numero : null, fmtFecha(c.fecha)].filter(Boolean).join('  ·  ');
+      const sub = [c.tipo_comprobante, c.numero ? 'N° ' + c.numero : null, fmtFecha(c.fecha)].filter(Boolean).join('  ·  ');
       card.appendChild(el('div', { class: 'list-row' }, [
         el('div', { class: 'list-row-main' }, [
           el('div', { class: 'list-row-title' }, fmtMoneda(c.total)),

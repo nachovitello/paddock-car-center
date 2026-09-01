@@ -165,7 +165,7 @@
       const { data: op, error: e1 } = await db.from('operaciones').insert({
         tipo: 'venta', estado: 'cerrada', cliente_id: clienteId, usuario_id,
         descripcion: 'Venta de mostrador', total: montoTotal, cerrado_en: new Date().toISOString()
-      }).select('id').single();
+      }).select('id, numero_venta').single();
       if (e1 || !op) throw e1 || new Error('op');
 
       // 2. Los ítems
@@ -196,14 +196,14 @@
       // 4. Caja
       const { error: e4 } = await db.from('movimientos_caja').insert({
         tipo: 'ingreso', monto: montoTotal, medio_pago: medio,
-        concepto: 'Venta de mostrador', operacion_id: op.id, usuario_id
+        concepto: 'Venta de mostrador' + (op.numero_venta ? ' N° ' + op.numero_venta : ''), operacion_id: op.id, usuario_id
       });
       if (e4) throw e4;
 
-      toast('Venta cerrada por ' + fmtMoneda(montoTotal) + '.', 'ok');
+      toast('Venta N° ' + (op.numero_venta || '') + ' cerrada.', 'ok');
       venta = [];
       productos = await traerProductos();  // stock actualizado
-      render(contActual);
+      location.hash = '#/ticket?id=' + op.id;
     } catch (err) {
       toast('Hubo un problema al guardar la venta. Revisá e intentá de nuevo.', 'error');
       btn.disabled = false;
@@ -271,5 +271,91 @@
     repintar();
   }
 
+  /* ---------- Ticket / comprobante de venta ---------- */
+  function idHash() { const m = location.hash.match(/[?&]id=([^&]+)/); return m ? decodeURIComponent(m[1]) : null; }
+  function fmtFecha(iso) { return iso ? new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
+
+  let contTicket = null;
+
+  async function anularVenta(op) {
+    if (!auth.esAdmin()) { toast('Solo el admin puede anular.', 'error'); return; }
+    const ok = await confirmar('¿Anular la venta N° ' + (op.numero_venta || '') + '? Se devuelve el stock y se revierte la caja.', 'Anular');
+    if (!ok) return;
+    const usuario_id = (auth.sesion() || {}).id || null;
+
+    // Devolver stock
+    const { data: items } = await db.from('operacion_items').select('producto_id, cantidad').eq('operacion_id', op.id);
+    const reps = (items || []).filter(i => i.producto_id);
+    if (reps.length) {
+      const ids = reps.map(i => i.producto_id);
+      const { data: act } = await db.from('productos').select('id, stock').in('id', ids);
+      const mapa = {}; (act || []).forEach(p => { mapa[p.id] = Number(p.stock) || 0; });
+      for (const i of reps) await db.from('productos').update({ stock: (mapa[i.producto_id] || 0) + Number(i.cantidad) }).eq('id', i.producto_id);
+      await db.from('movimientos_stock').insert(reps.map(i => ({ producto_id: i.producto_id, tipo: 'entrada', cantidad: i.cantidad, operacion_id: op.id, motivo: 'Anulación venta N° ' + (op.numero_venta || ''), usuario_id })));
+    }
+    // Revertir caja (movimiento compensatorio)
+    await db.from('movimientos_caja').insert({ tipo: 'egreso', monto: op.total, concepto: 'Anulación venta N° ' + (op.numero_venta || ''), operacion_id: op.id, usuario_id });
+    // Marcar anulada
+    await db.from('operaciones').update({ estado: 'anulada' }).eq('id', op.id);
+    toast('Venta anulada.', 'ok');
+    renderTicket(contTicket);
+  }
+
+  async function renderTicket(cont) {
+    contTicket = cont;
+    cont.innerHTML = '';
+    document.querySelectorAll('.mainnav a').forEach(a => a.classList.toggle('active', a.getAttribute('data-route') === 'ventas'));
+    const id = idHash();
+    cont.appendChild(el('div', { class: 'loading' }, 'Cargando comprobante…'));
+
+    const { data: op } = await db.from('operaciones')
+      .select('*, clientes(nombre, telefono)')
+      .eq('id', id).maybeSingle();
+    if (!op) { cont.innerHTML = ''; cont.appendChild(el('div', { class: 'empty' }, [el('div', { class: 'empty-title' }, 'Comprobante no encontrado')])); return; }
+    const [{ data: items }, { data: cajaMov }] = await Promise.all([
+      db.from('operacion_items').select('*').eq('operacion_id', id),
+      db.from('movimientos_caja').select('medio_pago').eq('operacion_id', id).limit(1).maybeSingle()
+    ]);
+    cont.innerHTML = '';
+
+    const anulada = op.estado === 'anulada';
+    const cli = op.clientes || {};
+    const medio = cajaMov ? cajaMov.medio_pago : null;
+    const textoWpp = 'Comprobante de venta N° ' + (op.numero_venta || '') + ' — Paddock Car Center\n' +
+      'Fecha: ' + fmtFecha(op.creado_en) + '\nTotal: ' + fmtMoneda(op.total) + '\n¡Gracias!';
+
+    cont.appendChild(el('div', { class: 'orden-acciones no-print' }, [
+      el('button', { class: 'back-link', onclick: () => { location.hash = '#/ventas'; } }, '← Nueva venta'),
+      el('div', { style: 'display:flex;gap:8px' }, [
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir / PDF'),
+        cli.telefono ? el('a', { class: 'btn btn-accent btn-sm', target: '_blank', rel: 'noopener',
+          href: 'https://wa.me/' + (cli.telefono || '').replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(textoWpp) }, 'WhatsApp') : null,
+        (!anulada && auth.esAdmin()) ? el('button', { class: 'btn btn-danger btn-sm', onclick: () => anularVenta(op) }, 'Anular') : null
+      ])
+    ]));
+
+    const doc = el('div', { class: 'orden-doc' });
+    if (anulada) doc.appendChild(el('div', { class: 'sello-anulado' }, 'ANULADA'));
+    doc.appendChild(el('div', { class: 'od-head' }, [
+      el('div', { class: 'od-brand' }, [ el('div', { class: 'od-brand-name' }, 'PADDOCK'), el('div', { class: 'od-brand-sub' }, 'Car Center') ]),
+      el('div', { class: 'od-title' }, [ el('div', { class: 'od-title-txt' }, 'Comprobante de venta'), el('div', { class: 'od-numero' }, 'N° ' + (op.numero_venta || '—')) ])
+    ]));
+    doc.appendChild(el('div', { class: 'od-datos' }, [
+      el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFecha(op.creado_en) ]),
+      cli.nombre ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cliente: '), cli.nombre ]) : null,
+      medio ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), medio ]) : null
+    ]));
+    const tabla = el('div', { class: 'od-facturas' }, [ el('div', { class: 'od-facturas-tit' }, 'Detalle') ]);
+    (items || []).forEach(it => tabla.appendChild(el('div', { class: 'od-fila' }, [
+      el('div', {}, it.descripcion + ' x' + it.cantidad),
+      el('div', { class: 'od-monto' }, fmtMoneda(it.subtotal))
+    ])));
+    doc.appendChild(tabla);
+    doc.appendChild(el('div', { class: 'od-total' }, [ el('span', {}, 'TOTAL' ), el('span', { class: 'od-total-monto' }, fmtMoneda(op.total)) ]));
+    doc.appendChild(el('div', { class: 'fs-pie' }, 'Gracias por su compra — Paddock Car Center'));
+    cont.appendChild(doc);
+  }
+
   router.registrar('ventas', render);
+  router.registrar('ticket', renderTicket);
 })();

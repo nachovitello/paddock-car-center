@@ -39,6 +39,10 @@
         el('input', { id: 'f-tel', type: 'tel', value: p.telefono || '' })
       ]),
       el('div', { class: 'field' }, [
+        el('label', { for: 'f-cuit' }, 'CUIT (opcional)'),
+        el('input', { id: 'f-cuit', type: 'text', value: p.cuit || '', placeholder: '20-12345678-9' })
+      ]),
+      el('div', { class: 'field' }, [
         el('label', { for: 'f-notas' }, 'Notas'),
         el('textarea', { id: 'f-notas' }, p.notas || '')
       ])
@@ -57,6 +61,7 @@
         const payload = {
           nombre,
           telefono: document.getElementById('f-tel').value.trim() || null,
+          cuit: document.getElementById('f-cuit').value.trim() || null,
           notas: document.getElementById('f-notas').value.trim() || null
         };
         const q = esNuevo
@@ -97,7 +102,7 @@
       card.appendChild(el('div', { class: 'list-row' }, [
         el('div', { class: 'list-row-main' }, [
           el('div', { class: 'list-row-title' }, p.nombre),
-          p.telefono ? el('div', { class: 'list-row-sub' }, p.telefono) : null
+          p.telefono || p.cuit ? el('div', { class: 'list-row-sub' }, [p.telefono, p.cuit ? 'CUIT ' + p.cuit : null].filter(Boolean).join('  ·  ')) : null
         ]),
         el('div', { class: 'list-row-actions' }, [
           el('button', { class: 'btn btn-ghost btn-sm', onclick: () => abrirForm(p) }, 'Editar'),

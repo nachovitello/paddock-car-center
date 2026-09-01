@@ -290,7 +290,7 @@
             o.vehiculos ? el('span', { class: 'patente-tag' }, o.vehiculos.patente) : el('span', {}, 'Sin patente'),
             el('span', { style: 'margin-left:10px;font-weight:500' }, o.clientes ? o.clientes.nombre : 'Sin cliente')
           ]),
-          el('div', { class: 'list-row-sub' }, fmtFecha(o.creado_en) + '  ·  ' + (o.descripcion || ''))
+          el('div', { class: 'list-row-sub' }, (o.numero_orden ? 'Orden N° ' + o.numero_orden + '  ·  ' : '') + fmtFecha(o.creado_en) + '  ·  ' + (o.descripcion || ''))
         ]),
         el('div', { class: 'compra-meta' }, [
           el('div', { class: 'compra-total' }, fmtMoneda(o.total)),
@@ -379,7 +379,7 @@
     const doc = el('div', { class: 'reporte-doc' });
     doc.appendChild(el('div', { class: 'rep-head' }, [
       el('div', { class: 'od-brand' }, [ el('div', { class: 'od-brand-name' }, 'PADDOCK'), el('div', { class: 'od-brand-sub' }, 'Car Center') ]),
-      el('div', { class: 'rep-title' }, [ el('div', { class: 'od-title-txt' }, 'Ficha de Service'), el('div', { class: 'rep-fecha' }, fmtFecha(o.creado_en)) ])
+      el('div', { class: 'rep-title' }, [ el('div', { class: 'od-title-txt' }, 'Ficha de Service'), o.numero_orden ? el('div', { class: 'od-numero' }, 'Orden N° ' + o.numero_orden) : null, el('div', { class: 'rep-fecha' }, fmtFecha(o.creado_en)) ])
     ]));
 
     const datos = el('div', { class: 'od-datos' }, [

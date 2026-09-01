@@ -1237,3 +1237,40 @@ textarea { resize: vertical; min-height: 70px; }
 @media print {
   .fs-item, .fs-sec { break-inside: avoid; }
 }
+
+/* ---------- Cobros (deuda a favor) ---------- */
+.deuda-box.cobrar { background: #05603A; }
+
+/* ---------- Examinador de comprobantes ---------- */
+.comp-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+
+/* ---------- Anulación ---------- */
+.sello-anulado {
+  position: absolute;
+  top: 40px; right: 30px;
+  transform: rotate(-12deg);
+  border: 3px solid var(--error);
+  color: var(--error);
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: .08em;
+  padding: 4px 16px;
+  border-radius: 8px;
+  opacity: .7;
+  pointer-events: none;
+}
+.orden-doc { position: relative; }
+.chip-anulado {
+  display: inline-block;
+  margin-left: 8px;
+  background: #FEF3F2;
+  color: var(--error);
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .04em;
+  padding: 1px 8px;
+  border-radius: 20px;
+  vertical-align: middle;
+}
