@@ -45,7 +45,7 @@
   async function traer() {
     const { ini, fin } = limites();
     const { data, error } = await db.from('movimientos_caja')
-      .select('*')
+      .select('*, usuarios_app(nombre)')
       .gte('creado_en', ini).lt('creado_en', fin)
       .order('creado_en', { ascending: false });
     if (error) { toast('No se pudieron cargar los movimientos.', 'error'); return []; }
@@ -154,16 +154,16 @@
       el('div', { class: 'caja-card egreso' }, [ el('span', { class: 'cc-lbl' }, 'Egresos'), el('span', { class: 'cc-val' }, fmtMoneda(t.egr)) ]),
       el('div', { class: 'caja-card saldo' }, [ el('span', { class: 'cc-lbl' }, 'Saldo'), el('span', { class: 'cc-val' }, fmtMoneda(t.saldo)) ])
     ]));
-    // Desglose por medio (neto)
-    const medios = Object.entries(t.porMedio).filter(([, v]) => Math.abs(v) > 0.01);
-    if (medios.length) {
-      resumen.appendChild(el('div', { class: 'caja-medios' },
-        medios.map(([medio, v]) => el('span', { class: 'caja-medio' }, [
-          el('span', { class: 'cm-nombre' }, medio),
-          el('span', { class: 'cm-val' }, fmtMoneda(v))
-        ]))
-      ));
-    }
+    // Desglose por medio (neto), en tarjetas claras
+    const fijos = ['efectivo', 'transferencia', 'tarjeta'];
+    const extras = Object.keys(t.porMedio).filter(m => !fijos.includes(m) && Math.abs(t.porMedio[m]) > 0.01);
+    const listaMedios = fijos.concat(extras);
+    resumen.appendChild(el('div', { class: 'medios-grid' },
+      listaMedios.map(medio => el('div', { class: 'medio-card' }, [
+        el('span', { class: 'medio-nombre' }, medio),
+        el('span', { class: 'medio-val' }, fmtMoneda(t.porMedio[medio] || 0))
+      ]))
+    ));
 
     // Lista
     const wrap = cont.querySelector('#caja-lista');
@@ -182,7 +182,7 @@
       card.appendChild(el('div', { class: 'list-row' }, [
         el('div', { class: 'list-row-main' }, [
           el('div', { class: 'list-row-title' }, m.concepto || (esIng ? 'Ingreso' : 'Egreso')),
-          el('div', { class: 'list-row-sub' }, fmtHora(m.creado_en) + '  ·  ' + (m.medio_pago || 'otro') + (m.manual ? '  ·  manual' : ''))
+          el('div', { class: 'list-row-sub' }, fmtHora(m.creado_en) + '  ·  ' + (m.medio_pago || 'otro') + (m.manual ? '  ·  manual' : '') + (auth.esAdmin() && m.usuarios_app ? '  ·  ' + m.usuarios_app.nombre : ''))
         ]),
         el('div', { class: 'caja-monto ' + (esIng ? 'ing' : 'egr') }, (esIng ? '+ ' : '− ') + fmtMoneda(m.monto)),
         el('div', { class: 'list-row-actions' }, [

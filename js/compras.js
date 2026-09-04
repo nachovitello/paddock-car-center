@@ -361,7 +361,7 @@
     cont.appendChild(el('div', { class: 'loading' }, 'Cargando cuenta…'));
 
     // Traemos las facturas del proveedor + pagos frescos.
-    let query = db.from('compras').select('*, proveedores(nombre)').order('fecha', { ascending: false });
+    let query = db.from('compras').select('*, proveedores(nombre), usuarios_app(nombre)').order('fecha', { ascending: false });
     query = (pid === 'sin') ? query.is('proveedor_id', null) : query.eq('proveedor_id', pid);
     const [{ data: compras }, pagosMapa] = await Promise.all([query, traerPagos()]);
     pagosPorCompra = pagosMapa;
@@ -398,7 +398,7 @@
     compras.forEach(c => {
       const est = estadoDe(c);
       const s = saldoDe(c);
-      const sub = [c.tipo_comprobante, c.numero ? 'N° ' + c.numero : null, fmtFecha(c.fecha)].filter(Boolean).join('  ·  ');
+      const sub = [c.tipo_comprobante, c.numero ? 'N° ' + c.numero : null, fmtFecha(c.fecha), (auth.esAdmin() && c.usuarios_app ? 'cargó ' + c.usuarios_app.nombre : null)].filter(Boolean).join('  ·  ');
       card.appendChild(el('div', { class: 'list-row' }, [
         el('div', { class: 'list-row-main' }, [
           el('div', { class: 'list-row-title' }, fmtMoneda(c.total)),

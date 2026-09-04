@@ -14,13 +14,17 @@
 
   // Checklist fijo (base de la planilla de Paddock). Configurable a futuro.
   const CHECKLIST = [
-    { seccion: 'Fluidos', items: ['Aceite motor', 'Filtro de aceite', 'Filtro de aire', 'Líquido de frenos', 'Líquido lavaparabrisas', 'Aceite de caja'] },
-    { seccion: 'Tren delantero', items: ['Amortiguadores', 'Parrillas', 'Extremos', 'Axiales', 'Rótulas', 'Bujes', 'Ruleman', 'Alineación'] },
-    { seccion: 'Tren trasero', items: ['Amortiguadores', 'Parrillas de suspensión', 'Bujes', 'Bieletas', 'Barra estabilizadora', 'Ruleman'] },
-    { seccion: 'Frenos', items: ['Pastillas', 'Discos', 'Cintas / campanas', 'Líquido de frenos'] },
-    { seccion: 'Distribución', items: ['Correa de distribución', 'Tensores', 'Bomba de agua', 'Correa de accesorios', 'Tensores C/A'] },
-    { seccion: 'Neumáticos', items: ['Delanteros', 'Traseros', 'Balanceo', 'Presión', 'Auxilio'] },
-    { seccion: 'Encendido', items: ['Bujías', 'Cables', 'Bobinas'] }
+    { seccion: 'Fluidos', items: [
+      { nombre: 'Aceite motor', tipo: 'aceite' },
+      { nombre: 'Filtro de aceite', tipo: 'brm' },
+      { nombre: 'Filtro de aire', tipo: 'brm' },
+      { nombre: 'Líquido de frenos', tipo: 'brm' },
+      { nombre: 'Líquido lavaparabrisas', tipo: 'brm' }
+    ] },
+    { seccion: 'Tren delantero', items: [ { nombre: 'Estado general', tipo: 'brm' } ] },
+    { seccion: 'Tren trasero', items: [ { nombre: 'Suspensión', tipo: 'brm' } ] },
+    { seccion: 'Frenos', items: [ { nombre: 'Pastillas', tipo: 'brm' }, { nombre: 'Discos', tipo: 'brm' }, { nombre: 'Cintas / campanas', tipo: 'brm' } ] },
+    { seccion: 'Neumáticos', items: [ { nombre: 'Alineado', tipo: 'brm' }, { nombre: 'Balanceado', tipo: 'brm' }, { nombre: 'Presión', tipo: 'brm' } ] }
   ];
 
   let cache = [];
@@ -68,6 +72,8 @@
     // Estado del formulario
     let vehiculoSel = null;
     const estados = {};          // "Sección::Ítem" -> 'bien'|'regular'|'mal'
+    const obsSeccion = {};       // "Sección" -> texto observación
+    const aceite = { cambiado: null, tipo: '' };   // aceite motor
     let repuestos = [];
 
     cont.appendChild(el('div', { class: 'detail-head' }, [
@@ -119,32 +125,54 @@
     /* --- Checklist --- */
     cont.appendChild(el('h2', { class: 'section-title' }, 'Control del vehículo'));
     const chkWrap = el('div', { class: 'card', style: 'padding:4px 0' });
+
+    function botonesBRM(key) {
+      const btnsWrap = el('div', { class: 'chk-btns' });
+      ['bien', 'regular', 'mal'].forEach(estado => {
+        const b = el('button', { class: 'chk-btn chk-' + estado, type: 'button' }, estado === 'bien' ? 'B' : (estado === 'regular' ? 'R' : 'M'));
+        b.addEventListener('click', () => {
+          const yaEstaba = estados[key] === estado;
+          btnsWrap.querySelectorAll('.chk-btn').forEach(x => x.classList.remove('activo'));
+          if (yaEstaba) { delete estados[key]; } else { estados[key] = estado; b.classList.add('activo'); }
+        });
+        btnsWrap.appendChild(b);
+      });
+      return btnsWrap;
+    }
+
     CHECKLIST.forEach(sec => {
       chkWrap.appendChild(el('div', { class: 'chk-seccion' }, sec.seccion));
       sec.items.forEach(item => {
-        const key = sec.seccion + '::' + item;
-        const btnsWrap = el('div', { class: 'chk-btns' });
-        const fila = el('div', { class: 'chk-fila' }, [
-          el('div', { class: 'chk-item' }, item),
-          btnsWrap
-        ]);
-        ['bien', 'regular', 'mal'].forEach(estado => {
-          const b = el('button', { class: 'chk-btn chk-' + estado, type: 'button' }, estado === 'bien' ? 'B' : (estado === 'regular' ? 'R' : 'M'));
-          b.addEventListener('click', () => {
-            const yaEstaba = estados[key] === estado;
-            btnsWrap.querySelectorAll('.chk-btn').forEach(x => x.classList.remove('activo'));
-            if (yaEstaba) { delete estados[key]; }
-            else { estados[key] = estado; b.classList.add('activo'); }
+        if (item.tipo === 'aceite') {
+          // Aceite motor: Cambiado / No cambiado + qué aceite
+          const wrap = el('div', { class: 'chk-btns' });
+          const inpTipo = el('input', { type: 'text', class: 'chk-aceite-input', placeholder: '¿Qué aceite?', value: aceite.tipo });
+          inpTipo.addEventListener('input', () => { aceite.tipo = inpTipo.value; });
+          [['si', 'Cambiado'], ['no', 'No']].forEach(([val, txt]) => {
+            const b = el('button', { class: 'chk-btn chk-aceite chk-' + (val === 'si' ? 'bien' : 'mal'), type: 'button', style: 'width:auto;padding:0 12px' }, txt);
+            b.addEventListener('click', () => {
+              const ya = aceite.cambiado === val;
+              wrap.querySelectorAll('.chk-btn').forEach(x => x.classList.remove('activo'));
+              if (ya) { aceite.cambiado = null; } else { aceite.cambiado = val; b.classList.add('activo'); }
+            });
+            wrap.appendChild(b);
           });
-          btnsWrap.appendChild(b);
-        });
-        chkWrap.appendChild(fila);
+          chkWrap.appendChild(el('div', { class: 'chk-fila' }, [ el('div', { class: 'chk-item' }, item.nombre), wrap ]));
+          chkWrap.appendChild(el('div', { class: 'chk-aceite-row' }, [inpTipo]));
+        } else {
+          const key = sec.seccion + '::' + item.nombre;
+          chkWrap.appendChild(el('div', { class: 'chk-fila' }, [ el('div', { class: 'chk-item' }, item.nombre), botonesBRM(key) ]));
+        }
       });
+      // Observación de la sección
+      const obs = el('input', { type: 'text', class: 'chk-obs-input', placeholder: 'Observaciones de ' + sec.seccion.toLowerCase() + '…' });
+      obs.addEventListener('input', () => { obsSeccion[sec.seccion] = obs.value.trim() || undefined; });
+      chkWrap.appendChild(el('div', { class: 'chk-obs-row' }, [obs]));
     });
     cont.appendChild(chkWrap);
 
     cont.appendChild(el('div', { class: 'field', style: 'margin-top:12px' }, [
-      el('label', { for: 'o-obs' }, 'Observaciones'),
+      el('label', { for: 'o-obs' }, 'Observaciones generales'),
       el('textarea', { id: 'o-obs', placeholder: 'Notas del control, recomendaciones…' }, '')
     ]));
 
@@ -211,7 +239,9 @@
       const checklist = {
         motivo,
         observaciones: document.getElementById('o-obs').value.trim() || null,
-        estados
+        estados,
+        obsSeccion,
+        aceite
       };
 
       try {
@@ -353,7 +383,7 @@
     cont.appendChild(el('div', { class: 'loading' }, 'Cargando ficha…'));
 
     const { data: o } = await db.from('operaciones')
-      .select('*, vehiculos(patente, marca, modelo, anio), clientes(nombre, telefono)')
+      .select('*, vehiculos(patente, marca, modelo, anio), clientes(nombre, telefono), usuarios_app(nombre)')
       .eq('id', id).maybeSingle();
     if (!o) { cont.innerHTML = ''; cont.appendChild(el('div', { class: 'empty' }, [el('div', { class: 'empty-title' }, 'Ficha no encontrada')])); return; }
     const { data: items } = await db.from('operacion_items').select('*').eq('operacion_id', id);
@@ -386,25 +416,44 @@
       el('div', {}, [ el('span', { class: 'od-lbl' }, 'Vehículo: '), el('strong', {}, v.patente || '—'), el('span', {}, ' ' + [v.marca, v.modelo, v.anio].filter(Boolean).join(' ')) ]),
       c.nombre ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cliente: '), c.nombre ]) : null,
       o.km_ingreso ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Kilometraje: '), Number(o.km_ingreso).toLocaleString('es-AR') + ' km' ]) : null,
-      chk.motivo ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Motivo: '), chk.motivo ]) : null
+      chk.motivo ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Motivo: '), chk.motivo ]) : null,
+      (auth.esAdmin() && o.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cargó: '), o.usuarios_app.nombre ]) : null
     ]);
     doc.appendChild(datos);
 
-    // Checklist
-    const secs = Object.keys(g);
-    if (secs.length) {
-      doc.appendChild(el('h2', { class: 'section-title' }, 'Control del vehículo'));
-      const chkBox = el('div', { class: 'fs-chk' });
-      secs.forEach(sec => {
-        chkBox.appendChild(el('div', { class: 'fs-sec' }, sec));
-        g[sec].forEach(it => {
-          chkBox.appendChild(el('div', { class: 'fs-item' }, [
-            el('span', {}, it.item),
-            el('span', { class: 'fs-estado ' + it.estado }, estadoTxt(it.estado))
-          ]));
-        });
+    // Checklist (recorremos la definición, mostrando lo que tenga dato)
+    const estados = chk.estados || {};
+    const obsSec = chk.obsSeccion || {};
+    const aceite = chk.aceite || {};
+    const bloques = [];
+    CHECKLIST.forEach(sec => {
+      const filas = [];
+      sec.items.forEach(item => {
+        if (item.tipo === 'aceite') {
+          if (aceite.cambiado || aceite.tipo) {
+            const txt = (aceite.cambiado === 'si' ? 'Cambiado' : (aceite.cambiado === 'no' ? 'No cambiado' : '')) + (aceite.tipo ? ' — ' + aceite.tipo : '');
+            filas.push(el('div', { class: 'fs-item' }, [
+              el('span', {}, item.nombre),
+              el('span', { class: 'fs-estado ' + (aceite.cambiado === 'si' ? 'bien' : 'mal') }, txt.trim())
+            ]));
+          }
+        } else {
+          const est = estados[sec.seccion + '::' + item.nombre];
+          if (est) filas.push(el('div', { class: 'fs-item' }, [ el('span', {}, item.nombre), el('span', { class: 'fs-estado ' + est }, estadoTxt(est)) ]));
+        }
       });
-      doc.appendChild(chkBox);
+      const obs = obsSec[sec.seccion];
+      if (filas.length || obs) {
+        bloques.push(el('div', {}, [
+          el('div', { class: 'fs-sec' }, sec.seccion),
+          ...filas,
+          obs ? el('div', { class: 'fs-obs' }, 'Obs: ' + obs) : null
+        ]));
+      }
+    });
+    if (bloques.length) {
+      doc.appendChild(el('h2', { class: 'section-title' }, 'Control del vehículo'));
+      doc.appendChild(el('div', { class: 'fs-chk' }, bloques));
     }
 
     if (chk.observaciones) {

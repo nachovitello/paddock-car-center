@@ -248,7 +248,7 @@
     cont.appendChild(el('div', { class: 'loading' }, 'Cargando recibo…'));
 
     const { data: cobro } = await db.from('cobros')
-      .select('*, clientes(nombre, telefono), operaciones(numero_orden, descripcion, total, vehiculos(patente))')
+      .select('*, clientes(nombre, telefono), usuarios_app(nombre), operaciones(numero_orden, descripcion, total, vehiculos(patente))')
       .eq('id', id).maybeSingle();
     if (!cobro) { cont.innerHTML = ''; cont.appendChild(el('div', { class: 'empty' }, [el('div', { class: 'empty-title' }, 'Recibo no encontrado')])); return; }
     cont.innerHTML = '';
@@ -288,7 +288,8 @@
       op.numero_orden ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Orden: '), 'N° ' + op.numero_orden ]) : null,
       el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFechaD(cobro.fecha) ]),
       el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), (cobro.medio_pago || '—') ]),
-      op.descripcion ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Trabajo: '), op.descripcion ]) : null
+      op.descripcion ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Trabajo: '), op.descripcion ]) : null,
+      (auth.esAdmin() && cobro.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cobró: '), cobro.usuarios_app.nombre ]) : null
     ]));
     doc.appendChild(el('div', { class: 'od-total' }, [ el('span', {}, 'RECIBIMOS' ), el('span', { class: 'od-total-monto' }, fmtMoneda(cobro.monto)) ]));
     doc.appendChild(el('div', { class: 'od-firma' }, [ el('div', { class: 'od-firma-linea' }), el('div', { class: 'od-firma-txt' }, 'Paddock Car Center') ]));

@@ -9,7 +9,7 @@
    ============================================================ */
 (function () {
   const { db, ui, router, auth } = window.PADDOCK;
-  const { el, toast, confirmar } = ui;
+  const { el, toast, confirmar, modal } = ui;
 
   let productos = [];   // catálogo
   let clientes = [];
@@ -55,6 +55,31 @@
   }
 
   function quitar(idx) { venta.splice(idx, 1); repintar(); }
+
+  // Ítem escrito a mano (no está en el catálogo, no descuenta stock)
+  function agregarManual() {
+    modal({
+      titulo: 'Ítem manual',
+      cuerpo: el('div', {}, [
+        el('div', { class: 'field' }, [ el('label', { for: 'im-nombre' }, 'Descripción'), el('input', { id: 'im-nombre', type: 'text', placeholder: 'ej. Aceite suelto 1L' }) ]),
+        el('div', { class: 'field-row' }, [
+          el('div', { class: 'field' }, [ el('label', { for: 'im-precio' }, 'Precio unitario'), el('input', { id: 'im-precio', type: 'number', min: '0', step: '1' }) ]),
+          el('div', { class: 'field' }, [ el('label', { for: 'im-cant' }, 'Cantidad'), el('input', { id: 'im-cant', type: 'number', min: '1', step: '1', value: '1' }) ])
+        ])
+      ]),
+      textoGuardar: 'Agregar',
+      onGuardar: () => {
+        const nombre = document.getElementById('im-nombre').value.trim();
+        const precio = Number(document.getElementById('im-precio').value || 0);
+        const cant = Math.max(1, parseInt(document.getElementById('im-cant').value || '1', 10));
+        if (!nombre) { toast('Poné una descripción.', 'error'); return false; }
+        if (precio <= 0) { toast('Poné un precio válido.', 'error'); return false; }
+        venta.push({ producto_id: null, nombre, precio_unit: precio, cantidad: cant, stock: Infinity });
+        repintar();
+      }
+    });
+  }
+
 
   function total() {
     return venta.reduce((acc, l) => acc + (l.precio_unit * l.cantidad), 0);
@@ -177,21 +202,21 @@
       const { error: e2 } = await db.from('operacion_items').insert(items);
       if (e2) throw e2;
 
-      // 3. Descontar stock (sobre el valor real actual) + movimientos
-      const ids = venta.map(l => l.producto_id);
-      const { data: actuales } = await db.from('productos').select('id, stock').in('id', ids);
-      const mapa = {};
-      (actuales || []).forEach(p => { mapa[p.id] = Number(p.stock) || 0; });
-
-      for (const l of venta) {
-        const nuevo = (mapa[l.producto_id] ?? 0) - l.cantidad;
-        await db.from('productos').update({ stock: nuevo }).eq('id', l.producto_id);
+      // 3. Descontar stock solo de los ítems del catálogo (los manuales no tienen stock)
+      const conStock = venta.filter(l => l.producto_id);
+      if (conStock.length) {
+        const ids = conStock.map(l => l.producto_id);
+        const { data: actuales } = await db.from('productos').select('id, stock').in('id', ids);
+        const mapa = {};
+        (actuales || []).forEach(p => { mapa[p.id] = Number(p.stock) || 0; });
+        for (const l of conStock) {
+          await db.from('productos').update({ stock: (mapa[l.producto_id] ?? 0) - l.cantidad }).eq('id', l.producto_id);
+        }
+        await db.from('movimientos_stock').insert(conStock.map(l => ({
+          producto_id: l.producto_id, tipo: 'salida', cantidad: l.cantidad,
+          operacion_id: op.id, motivo: 'Venta mostrador', usuario_id
+        })));
       }
-      const movs = venta.map(l => ({
-        producto_id: l.producto_id, tipo: 'salida', cantidad: l.cantidad,
-        operacion_id: op.id, motivo: 'Venta mostrador', usuario_id
-      }));
-      await db.from('movimientos_stock').insert(movs);
 
       // 4. Caja
       const { error: e4 } = await db.from('movimientos_caja').insert({
@@ -227,11 +252,14 @@
 
     // Buscador
     cont.appendChild(el('div', { class: 'venta-buscador' }, [
-      el('input', {
-        id: 'venta-busqueda', class: 'search', type: 'text',
-        placeholder: 'Buscar repuesto por nombre o código…',
-        oninput: (e) => { filtroBusq = e.target.value; pintarResultados(); }
-      }),
+      el('div', { style: 'display:flex;gap:8px' }, [
+        el('input', {
+          id: 'venta-busqueda', class: 'search', type: 'text', style: 'flex:1',
+          placeholder: 'Buscar repuesto por nombre o código…',
+          oninput: (e) => { filtroBusq = e.target.value; pintarResultados(); }
+        }),
+        el('button', { class: 'btn btn-ghost', style: 'white-space:nowrap', onclick: agregarManual }, '+ Ítem manual')
+      ]),
       el('div', { id: 'venta-resultados', class: 'venta-resultados' })
     ]));
 
@@ -309,7 +337,7 @@
     cont.appendChild(el('div', { class: 'loading' }, 'Cargando comprobante…'));
 
     const { data: op } = await db.from('operaciones')
-      .select('*, clientes(nombre, telefono)')
+      .select('*, clientes(nombre, telefono), usuarios_app(nombre)')
       .eq('id', id).maybeSingle();
     if (!op) { cont.innerHTML = ''; cont.appendChild(el('div', { class: 'empty' }, [el('div', { class: 'empty-title' }, 'Comprobante no encontrado')])); return; }
     const [{ data: items }, { data: cajaMov }] = await Promise.all([
@@ -343,7 +371,8 @@
     doc.appendChild(el('div', { class: 'od-datos' }, [
       el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFecha(op.creado_en) ]),
       cli.nombre ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cliente: '), cli.nombre ]) : null,
-      medio ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), medio ]) : null
+      medio ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), medio ]) : null,
+      (auth.esAdmin() && op.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cargó: '), op.usuarios_app.nombre ]) : null
     ]));
     const tabla = el('div', { class: 'od-facturas' }, [ el('div', { class: 'od-facturas-tit' }, 'Detalle') ]);
     (items || []).forEach(it => tabla.appendChild(el('div', { class: 'od-fila' }, [

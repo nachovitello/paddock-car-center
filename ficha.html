@@ -31,15 +31,19 @@
 
       function estadoTxt(e) { return e === 'bien' ? 'Bien' : (e === 'regular' ? 'Regular' : 'Mal'); }
 
-      function grupos(estados) {
-        const g = {};
-        Object.entries(estados || {}).forEach(([k, v]) => {
-          const p = k.split('::'); const sec = p[0], item = p[1];
-          if (!g[sec]) g[sec] = [];
-          g[sec].push({ item, estado: v });
-        });
-        return g;
-      }
+      const CHECKLIST = [
+        { seccion: 'Fluidos', items: [
+          { nombre: 'Aceite motor', tipo: 'aceite' },
+          { nombre: 'Filtro de aceite', tipo: 'brm' },
+          { nombre: 'Filtro de aire', tipo: 'brm' },
+          { nombre: 'Líquido de frenos', tipo: 'brm' },
+          { nombre: 'Líquido lavaparabrisas', tipo: 'brm' }
+        ] },
+        { seccion: 'Tren delantero', items: [ { nombre: 'Estado general', tipo: 'brm' } ] },
+        { seccion: 'Tren trasero', items: [ { nombre: 'Suspensión', tipo: 'brm' } ] },
+        { seccion: 'Frenos', items: [ { nombre: 'Pastillas', tipo: 'brm' }, { nombre: 'Discos', tipo: 'brm' }, { nombre: 'Cintas / campanas', tipo: 'brm' } ] },
+        { seccion: 'Neumáticos', items: [ { nombre: 'Alineado', tipo: 'brm' }, { nombre: 'Balanceado', tipo: 'brm' }, { nombre: 'Presión', tipo: 'brm' } ] }
+      ];
 
       async function cargar() {
         const id = new URLSearchParams(location.search).get('orden');
@@ -57,13 +61,15 @@
       function render(o, items) {
         const v = o.vehiculos || {}, c = o.clientes || {};
         const chk = o.checklist || {};
-        const g = grupos(chk.estados);
+        const estados = chk.estados || {};
+        const obsSec = chk.obsSeccion || {};
+        const aceite = chk.aceite || {};
         const repuestos = items.filter(i => i.tipo_item === 'producto');
         const mano = items.filter(i => i.tipo_item === 'mano_obra');
 
         let html = '<div class="reporte-doc">';
         html += '<div class="rep-head"><div class="od-brand"><div class="od-brand-name">PADDOCK</div><div class="od-brand-sub">Car Center</div></div>' +
-                '<div class="rep-title"><div class="od-title-txt">Ficha de Service</div><div class="rep-fecha">' + fmtFecha(o.creado_en) + '</div></div></div>';
+                '<div class="rep-title"><div class="od-title-txt">Ficha de Service</div>' + (o.numero_orden ? '<div class="od-numero">Orden N° ' + o.numero_orden + '</div>' : '') + '<div class="rep-fecha">' + fmtFecha(o.creado_en) + '</div></div></div>';
 
         html += '<div class="od-datos">';
         html += '<div><span class="od-lbl">Vehículo: </span><strong>' + esc(v.patente || '—') + '</strong> ' + esc([v.marca, v.modelo, v.anio].filter(Boolean).join(' ')) + '</div>';
@@ -72,18 +78,27 @@
         if (chk.motivo) html += '<div><span class="od-lbl">Motivo: </span>' + esc(chk.motivo) + '</div>';
         html += '</div>';
 
-        // Checklist
-        const secs = Object.keys(g);
-        if (secs.length) {
-          html += '<h2 class="section-title">Control del vehículo</h2><div class="fs-chk">';
-          secs.forEach(sec => {
-            html += '<div class="fs-sec">' + esc(sec) + '</div>';
-            g[sec].forEach(it => {
-              html += '<div class="fs-item"><span>' + esc(it.item) + '</span><span class="fs-estado ' + it.estado + '">' + estadoTxt(it.estado) + '</span></div>';
-            });
+        // Checklist según la definición
+        let chkHtml = '';
+        CHECKLIST.forEach(sec => {
+          let filas = '';
+          sec.items.forEach(item => {
+            if (item.tipo === 'aceite') {
+              if (aceite.cambiado || aceite.tipo) {
+                const txt = (aceite.cambiado === 'si' ? 'Cambiado' : (aceite.cambiado === 'no' ? 'No cambiado' : '')) + (aceite.tipo ? ' — ' + aceite.tipo : '');
+                filas += '<div class="fs-item"><span>' + esc(item.nombre) + '</span><span class="fs-estado ' + (aceite.cambiado === 'si' ? 'bien' : 'mal') + '">' + esc(txt.trim()) + '</span></div>';
+              }
+            } else {
+              const est = estados[sec.seccion + '::' + item.nombre];
+              if (est) filas += '<div class="fs-item"><span>' + esc(item.nombre) + '</span><span class="fs-estado ' + est + '">' + estadoTxt(est) + '</span></div>';
+            }
           });
-          html += '</div>';
-        }
+          const obs = obsSec[sec.seccion];
+          if (filas || obs) {
+            chkHtml += '<div class="fs-sec">' + esc(sec.seccion) + '</div>' + filas + (obs ? '<div class="fs-obs">Obs: ' + esc(obs) + '</div>' : '');
+          }
+        });
+        if (chkHtml) html += '<h2 class="section-title">Control del vehículo</h2><div class="fs-chk">' + chkHtml + '</div>';
 
         if (chk.observaciones) html += '<h2 class="section-title">Observaciones</h2><div class="muted">' + esc(chk.observaciones) + '</div>';
 

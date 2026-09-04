@@ -168,7 +168,7 @@
     cont.appendChild(el('div', { class: 'loading' }, 'Cargando orden…'));
 
     const { data: pago } = await db.from('pagos')
-      .select('*, proveedores(nombre, telefono)')
+      .select('*, proveedores(nombre, telefono), usuarios_app(nombre)')
       .eq('id', pagoId).maybeSingle();
     if (!pago) { cont.innerHTML = ''; cont.appendChild(el('div', { class: 'empty' }, [el('div', { class: 'empty-title' }, 'Orden no encontrada')])); return; }
 
@@ -212,7 +212,8 @@
       el('div', { class: 'od-datos' }, [
         el('div', {}, [ el('span', { class: 'od-lbl' }, 'Proveedor: '), el('strong', {}, prov.nombre || '—') ]),
         el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFecha(pago.fecha) ]),
-        el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), (pago.medio_pago || '—') ])
+        el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), (pago.medio_pago || '—') ]),
+        (auth.esAdmin() && pago.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Registró: '), pago.usuarios_app.nombre ]) : null
       ]),
       el('div', { class: 'od-facturas' }, [
         el('div', { class: 'od-facturas-tit' }, 'Facturas abonadas'),
