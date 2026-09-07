@@ -14,9 +14,7 @@
   </style>
 </head>
 <body>
-  <div class="fs-wrap" id="cont">
-    <div class="loading">Cargando ficha…</div>
-  </div>
+  <div class="fs-wrap" id="cont"><div class="loading">Cargando ficha…</div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
@@ -29,94 +27,88 @@
       function fmtFecha(iso) { return iso ? new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
       function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-      function estadoTxt(e) { return e === 'bien' ? 'Bien' : (e === 'regular' ? 'Regular' : 'Mal'); }
-
-      const CHECKLIST = [
-        { seccion: 'Fluidos', items: [
-          { nombre: 'Aceite motor', tipo: 'aceite' },
-          { nombre: 'Filtro de aceite', tipo: 'brm' },
-          { nombre: 'Filtro de aire', tipo: 'brm' },
-          { nombre: 'Líquido de frenos', tipo: 'brm' },
-          { nombre: 'Líquido lavaparabrisas', tipo: 'brm' }
-        ] },
-        { seccion: 'Tren delantero', items: [ { nombre: 'Estado general', tipo: 'brm' } ] },
-        { seccion: 'Tren trasero', items: [ { nombre: 'Suspensión', tipo: 'brm' } ] },
-        { seccion: 'Frenos', items: [ { nombre: 'Pastillas', tipo: 'brm' }, { nombre: 'Discos', tipo: 'brm' }, { nombre: 'Cintas / campanas', tipo: 'brm' } ] },
-        { seccion: 'Neumáticos', items: [ { nombre: 'Alineado', tipo: 'brm' }, { nombre: 'Balanceado', tipo: 'brm' }, { nombre: 'Presión', tipo: 'brm' } ] }
-      ];
+      // Mismas secciones que el sistema
+      const SEC_SERVICE = { seccion: 'Service', items: [
+        { n: 'Aceite', t: 'texto' }, { n: 'Filtro de aire', t: 'sino' }, { n: 'Filtro de aceite', t: 'sino' },
+        { n: 'Filtro de combustible', t: 'sino' }, { n: 'Filtro de habitáculo', t: 'sino' }, { n: 'Aceite de caja', t: 'sino' }, { n: 'Filtro de caja', t: 'sino' } ] };
+      const SEC_FLUIDOS = { seccion: 'Fluidos', items: [
+        { n: 'Líquido de frenos', t: 'texto' }, { n: 'Líquido hidráulico', t: 'texto' }, { n: 'Líquido refrigerante', t: 'texto' },
+        { n: 'Líquido lavaparabrisas', t: 'texto' }, { n: 'Aceite de caja', t: 'texto' }, { n: 'Aceite de motor', t: 'texto' } ] };
+      const SEC_LUCES = { seccion: 'Luces', items: [ { n: 'Luces', t: 'texto' }, { n: 'Avisos en tablero', t: 'sino' } ] };
+      const SEC_NEUMATICOS = { seccion: 'Neumáticos', items: [ { n: 'Balanceado', t: 'texto' }, { n: 'Presión', t: 'texto' } ] };
+      const SEC_FRENOS = { seccion: 'Frenos', items: [
+        { n: 'Delanteros', t: 'texto' }, { n: 'Discos delanteros', t: 'texto' }, { n: 'Pastillas delanteras', t: 'texto' },
+        { n: 'Traseros', t: 'texto' }, { n: 'Campanas y cintas', t: 'texto' }, { n: 'Discos traseros', t: 'texto' }, { n: 'Pastillas traseras', t: 'texto' }, { n: 'Freno de mano', t: 'texto' } ] };
+      const SEC_TREN_DEL = { seccion: 'Tren delantero', items: [
+        { n: 'Amortiguadores delanteros', t: 'texto' }, { n: 'Parrillas de suspensión', t: 'texto' }, { n: 'Extremos de dirección', t: 'texto' },
+        { n: 'Axiales', t: 'texto' }, { n: 'Barra estabilizadora', t: 'texto' }, { n: 'Bieletas', t: 'texto' }, { n: 'Rótulas', t: 'texto' },
+        { n: 'Caja de dirección', t: 'texto' }, { n: 'Rulemanes', t: 'texto' }, { n: 'Alineado', t: 'texto' }, { n: 'Combas', t: 'texto' } ] };
+      const SEC_TREN_TRAS = { seccion: 'Tren trasero', items: [
+        { n: 'Puente', t: 'texto' }, { n: 'Amortiguadores traseros', t: 'texto' }, { n: 'Barra estabilizadora', t: 'texto' },
+        { n: 'Bieletas', t: 'texto' }, { n: 'Bujes', t: 'texto' }, { n: 'Parrillas de suspensión', t: 'texto' }, { n: 'Rulemanes', t: 'texto' } ] };
+      const SEC_DISTRIB = { seccion: 'Distribución', items: [
+        { n: 'Correa de distribución', t: 'sino' }, { n: 'Tensores', t: 'sino' }, { n: 'Bomba de agua', t: 'sino' }, { n: 'Correa de accesorios', t: 'sino' }, { n: 'Tensores C/A', t: 'sino' } ] };
+      const SEC_ENCENDIDO = { seccion: 'Encendido', items: [ { n: 'Bujías', t: 'texto' }, { n: 'Cables', t: 'texto' }, { n: 'Bobinas', t: 'texto' } ] };
+      const SEC_ESCOBILLAS = { seccion: 'Escobillas', items: [ { n: 'Delanteras', t: 'texto' }, { n: 'Traseras', t: 'texto' } ] };
+      const FICHAS = {
+        convencional: { nombre: 'Service convencional', secciones: [SEC_SERVICE, SEC_FLUIDOS, SEC_NEUMATICOS, SEC_LUCES, SEC_FRENOS] },
+        full: { nombre: 'Service full', secciones: [SEC_SERVICE, SEC_FLUIDOS, SEC_LUCES, SEC_TREN_DEL, SEC_TREN_TRAS, SEC_FRENOS, SEC_DISTRIB, SEC_NEUMATICOS, SEC_ENCENDIDO, SEC_ESCOBILLAS] }
+      };
 
       async function cargar() {
         const id = new URLSearchParams(location.search).get('orden');
         if (!id) { cont.innerHTML = '<div class="empty"><div class="empty-title">Ficha no encontrada</div></div>'; return; }
-
-        const { data: o } = await db.from('operaciones')
-          .select('*, vehiculos(patente, marca, modelo, anio), clientes(nombre)')
-          .eq('id', id).maybeSingle();
+        const { data: o } = await db.from('operaciones').select('*, vehiculos(patente, marca, modelo, anio), clientes(nombre)').eq('id', id).maybeSingle();
         if (!o) { cont.innerHTML = '<div class="empty"><div class="empty-title">Ficha no encontrada</div></div>'; return; }
-
         const { data: items } = await db.from('operacion_items').select('*').eq('operacion_id', id);
         render(o, items || []);
       }
 
       function render(o, items) {
-        const v = o.vehiculos || {}, c = o.clientes || {};
-        const chk = o.checklist || {};
-        const estados = chk.estados || {};
-        const obsSec = chk.obsSeccion || {};
-        const aceite = chk.aceite || {};
+        const v = o.vehiculos || {}, c = o.clientes || {}, chk = o.checklist || {};
+        const header = chk.header || {}, valores = chk.valores || {};
+        const tipoFicha = chk.tipo && FICHAS[chk.tipo] ? chk.tipo : 'convencional';
         const repuestos = items.filter(i => i.tipo_item === 'producto');
         const mano = items.filter(i => i.tipo_item === 'mano_obra');
 
         let html = '<div class="reporte-doc">';
         html += '<div class="rep-head"><div class="od-brand"><div class="od-brand-name">PADDOCK</div><div class="od-brand-sub">Car Center</div></div>' +
-                '<div class="rep-title"><div class="od-title-txt">Ficha de Service</div>' + (o.numero_orden ? '<div class="od-numero">Orden N° ' + o.numero_orden + '</div>' : '') + '<div class="rep-fecha">' + fmtFecha(o.creado_en) + '</div></div></div>';
+                '<div class="rep-title"><div class="od-title-txt">Ficha de Service</div><div class="rep-fecha">' + esc(FICHAS[tipoFicha].nombre) + '</div>' +
+                (o.numero_orden ? '<div class="od-numero">Orden N° ' + o.numero_orden + '</div>' : '') + '<div class="rep-fecha">' + fmtFecha(o.creado_en) + '</div></div></div>';
 
         html += '<div class="od-datos">';
         html += '<div><span class="od-lbl">Vehículo: </span><strong>' + esc(v.patente || '—') + '</strong> ' + esc([v.marca, v.modelo, v.anio].filter(Boolean).join(' ')) + '</div>';
         if (c.nombre) html += '<div><span class="od-lbl">Cliente: </span>' + esc(c.nombre) + '</div>';
+        if (header.dni) html += '<div><span class="od-lbl">DNI: </span>' + esc(header.dni) + '</div>';
+        if (header.motor) html += '<div><span class="od-lbl">Motor: </span>' + esc(header.motor) + '</div>';
         if (o.km_ingreso) html += '<div><span class="od-lbl">Kilometraje: </span>' + Number(o.km_ingreso).toLocaleString('es-AR') + ' km</div>';
         if (chk.motivo) html += '<div><span class="od-lbl">Motivo: </span>' + esc(chk.motivo) + '</div>';
         html += '</div>';
 
-        // Checklist según la definición
         let chkHtml = '';
-        CHECKLIST.forEach(sec => {
+        FICHAS[tipoFicha].secciones.forEach(sec => {
           let filas = '';
           sec.items.forEach(item => {
-            if (item.tipo === 'aceite') {
-              if (aceite.cambiado || aceite.tipo) {
-                const txt = (aceite.cambiado === 'si' ? 'Cambiado' : (aceite.cambiado === 'no' ? 'No cambiado' : '')) + (aceite.tipo ? ' — ' + aceite.tipo : '');
-                filas += '<div class="fs-item"><span>' + esc(item.nombre) + '</span><span class="fs-estado ' + (aceite.cambiado === 'si' ? 'bien' : 'mal') + '">' + esc(txt.trim()) + '</span></div>';
-              }
-            } else {
-              const est = estados[sec.seccion + '::' + item.nombre];
-              if (est) filas += '<div class="fs-item"><span>' + esc(item.nombre) + '</span><span class="fs-estado ' + est + '">' + estadoTxt(est) + '</span></div>';
+            const val = valores[sec.seccion + '::' + item.n];
+            if (val) {
+              if (item.t === 'sino') filas += '<div class="fs-item"><span>' + esc(item.n) + '</span><span class="fs-estado ' + (val === 'si' ? 'bien' : 'mal') + '">' + (val === 'si' ? 'Sí' : 'No') + '</span></div>';
+              else filas += '<div class="fs-item"><span>' + esc(item.n) + '</span><span class="fs-val">' + esc(val) + '</span></div>';
             }
           });
-          const obs = obsSec[sec.seccion];
-          if (filas || obs) {
-            chkHtml += '<div class="fs-sec">' + esc(sec.seccion) + '</div>' + filas + (obs ? '<div class="fs-obs">Obs: ' + esc(obs) + '</div>' : '');
-          }
+          if (filas) chkHtml += '<div class="fs-sec">' + esc(sec.seccion) + '</div>' + filas;
         });
         if (chkHtml) html += '<h2 class="section-title">Control del vehículo</h2><div class="fs-chk">' + chkHtml + '</div>';
 
         if (chk.observaciones) html += '<h2 class="section-title">Observaciones</h2><div class="muted">' + esc(chk.observaciones) + '</div>';
 
-        // Repuestos y mano de obra
         if (repuestos.length || mano.length) {
           html += '<h2 class="section-title">Trabajo realizado</h2><div class="od-facturas">';
-          repuestos.forEach(r => {
-            html += '<div class="od-fila"><div>' + esc(r.descripcion) + ' x' + r.cantidad + '</div><div class="od-monto">' + fmtMoneda(r.subtotal) + '</div></div>';
-          });
-          mano.forEach(m => {
-            html += '<div class="od-fila"><div>' + esc(m.descripcion) + '</div><div class="od-monto">' + fmtMoneda(m.subtotal) + '</div></div>';
-          });
-          html += '</div>';
-          html += '<div class="od-total"><span>TOTAL</span><span class="od-total-monto">' + fmtMoneda(o.total) + '</span></div>';
+          repuestos.forEach(r => { html += '<div class="od-fila"><div>' + esc(r.descripcion) + ' x' + r.cantidad + '</div><div class="od-monto">' + fmtMoneda(r.subtotal) + '</div></div>'; });
+          mano.forEach(m => { html += '<div class="od-fila"><div>' + esc(m.descripcion) + '</div><div class="od-monto">' + fmtMoneda(m.subtotal) + '</div></div>'; });
+          html += '</div><div class="od-total"><span>TOTAL</span><span class="od-total-monto">' + fmtMoneda(o.total) + '</span></div>';
         }
 
-        html += '<div class="fs-pie">Gracias por confiar en Paddock Car Center</div>';
-        html += '</div>';
+        html += '<div class="fs-pie">Gracias por confiar en Paddock Car Center</div></div>';
         cont.innerHTML = html;
       }
 

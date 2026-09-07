@@ -108,5 +108,18 @@
     });
   };
 
+  // Genera y descarga un PDF a partir de un nodo del DOM.
+  UI.descargarPDF = function (nodo, nombre) {
+    if (typeof html2pdf === 'undefined') { UI.toast('No se pudo generar el PDF. Recargá la página.', 'error'); return; }
+    UI.toast('Generando PDF…');
+    html2pdf().set({
+      margin: 8,
+      filename: nombre || 'comprobante.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(nodo).save();
+  };
+
   window.PADDOCK.ui = UI;
 })();

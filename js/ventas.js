@@ -355,7 +355,8 @@
     cont.appendChild(el('div', { class: 'orden-acciones no-print' }, [
       el('button', { class: 'back-link', onclick: () => { location.hash = '#/ventas'; } }, '← Nueva venta'),
       el('div', { style: 'display:flex;gap:8px' }, [
-        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir / PDF'),
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir'),
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => ui.descargarPDF(doc, 'venta-' + (op.numero_venta || '') + '.pdf') }, 'Descargar PDF'),
         cli.telefono ? el('a', { class: 'btn btn-accent btn-sm', target: '_blank', rel: 'noopener',
           href: 'https://wa.me/' + (cli.telefono || '').replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(textoWpp) }, 'WhatsApp') : null,
         (!anulada && auth.esAdmin()) ? el('button', { class: 'btn btn-danger btn-sm', onclick: () => anularVenta(op) }, 'Anular') : null

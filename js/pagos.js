@@ -183,7 +183,8 @@
     cont.appendChild(el('div', { class: 'orden-acciones no-print' }, [
       el('button', { class: 'back-link', onclick: () => history.back() }, '← Volver'),
       el('div', { style: 'display:flex;gap:8px' }, [
-        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir / PDF'),
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir'),
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => ui.descargarPDF(document.getElementById('orden-doc'), 'orden-pago-' + pago.numero + '.pdf') }, 'Descargar PDF'),
         prov.telefono ? el('a', {
           class: 'btn btn-accent btn-sm',
           href: 'https://wa.me/' + soloDigitos(prov.telefono) + '?text=' + encodeURIComponent(textoWhatsApp(pago, aplic, prov)),

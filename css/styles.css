@@ -1348,3 +1348,14 @@ textarea { resize: vertical; min-height: 70px; }
 .chk-obs-row { border-bottom: 2px solid var(--border); }
 .chk-btn.chk-aceite { font-size: 13px; }
 .fs-obs { font-size: 13px; color: var(--texto-2); padding: 4px 14px 8px; font-style: italic; }
+
+/* ---------- Ficha: valor de texto e input en el checklist ---------- */
+.chk-texto-input {
+  flex: 1;
+  max-width: 55%;
+  font-size: 14px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-fuerte);
+  border-radius: 8px;
+}
+.fs-val { font-weight: 600; text-align: right; color: var(--texto); }

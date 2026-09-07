@@ -1,31 +1,95 @@
 /* ============================================================
-   Vista TALLER — órdenes de trabajo con checklist de control.
-   La orden combina:
-     · checklist de control del vehículo (Bien/Regular/Mal)
-     · motivo de ingreso + observaciones
-     · repuestos del stock (descuentan inventario)
-     · mano de obra + total
-   Queda 'a cobrar' (no toca la caja). Se engancha con la
-   ficha del vehículo. La carga es una pantalla propia.
+   Vista TALLER — órdenes de trabajo con ficha de control.
+   Dos tipos de ficha: 'convencional' y 'full'.
+   Cada ítem se completa según su tipo:
+     · 'texto' → línea para escribir un valor
+     · 'sino'  → Sí / No
+   La orden queda 'a cobrar' (no toca la caja). Descuenta stock
+   y se engancha con la ficha del vehículo.
    ============================================================ */
 (function () {
   const { db, ui, router, auth } = window.PADDOCK;
   const { el, toast, confirmar } = ui;
 
-  // Checklist fijo (base de la planilla de Paddock). Configurable a futuro.
-  const CHECKLIST = [
-    { seccion: 'Fluidos', items: [
-      { nombre: 'Aceite motor', tipo: 'aceite' },
-      { nombre: 'Filtro de aceite', tipo: 'brm' },
-      { nombre: 'Filtro de aire', tipo: 'brm' },
-      { nombre: 'Líquido de frenos', tipo: 'brm' },
-      { nombre: 'Líquido lavaparabrisas', tipo: 'brm' }
-    ] },
-    { seccion: 'Tren delantero', items: [ { nombre: 'Estado general', tipo: 'brm' } ] },
-    { seccion: 'Tren trasero', items: [ { nombre: 'Suspensión', tipo: 'brm' } ] },
-    { seccion: 'Frenos', items: [ { nombre: 'Pastillas', tipo: 'brm' }, { nombre: 'Discos', tipo: 'brm' }, { nombre: 'Cintas / campanas', tipo: 'brm' } ] },
-    { seccion: 'Neumáticos', items: [ { nombre: 'Alineado', tipo: 'brm' }, { nombre: 'Balanceado', tipo: 'brm' }, { nombre: 'Presión', tipo: 'brm' } ] }
-  ];
+  // ---- Secciones reutilizables ----
+  const SEC_SERVICE = { seccion: 'Service', items: [
+    { n: 'Aceite', t: 'texto' },
+    { n: 'Filtro de aire', t: 'sino' },
+    { n: 'Filtro de aceite', t: 'sino' },
+    { n: 'Filtro de combustible', t: 'sino' },
+    { n: 'Filtro de habitáculo', t: 'sino' },
+    { n: 'Aceite de caja', t: 'sino' },
+    { n: 'Filtro de caja', t: 'sino' }
+  ] };
+  const SEC_FLUIDOS = { seccion: 'Fluidos', items: [
+    { n: 'Líquido de frenos', t: 'texto' },
+    { n: 'Líquido hidráulico', t: 'texto' },
+    { n: 'Líquido refrigerante', t: 'texto' },
+    { n: 'Líquido lavaparabrisas', t: 'texto' },
+    { n: 'Aceite de caja', t: 'texto' },
+    { n: 'Aceite de motor', t: 'texto' }
+  ] };
+  const SEC_LUCES = { seccion: 'Luces', items: [
+    { n: 'Luces', t: 'texto' },
+    { n: 'Avisos en tablero', t: 'sino' }
+  ] };
+  const SEC_NEUMATICOS = { seccion: 'Neumáticos', items: [
+    { n: 'Balanceado', t: 'texto' },
+    { n: 'Presión', t: 'texto' }
+  ] };
+  const SEC_FRENOS = { seccion: 'Frenos', items: [
+    { n: 'Delanteros', t: 'texto' },
+    { n: 'Discos delanteros', t: 'texto' },
+    { n: 'Pastillas delanteras', t: 'texto' },
+    { n: 'Traseros', t: 'texto' },
+    { n: 'Campanas y cintas', t: 'texto' },
+    { n: 'Discos traseros', t: 'texto' },
+    { n: 'Pastillas traseras', t: 'texto' },
+    { n: 'Freno de mano', t: 'texto' }
+  ] };
+  const SEC_TREN_DEL = { seccion: 'Tren delantero', items: [
+    { n: 'Amortiguadores delanteros', t: 'texto' },
+    { n: 'Parrillas de suspensión', t: 'texto' },
+    { n: 'Extremos de dirección', t: 'texto' },
+    { n: 'Axiales', t: 'texto' },
+    { n: 'Barra estabilizadora', t: 'texto' },
+    { n: 'Bieletas', t: 'texto' },
+    { n: 'Rótulas', t: 'texto' },
+    { n: 'Caja de dirección', t: 'texto' },
+    { n: 'Rulemanes', t: 'texto' },
+    { n: 'Alineado', t: 'texto' },
+    { n: 'Combas', t: 'texto' }
+  ] };
+  const SEC_TREN_TRAS = { seccion: 'Tren trasero', items: [
+    { n: 'Puente', t: 'texto' },
+    { n: 'Amortiguadores traseros', t: 'texto' },
+    { n: 'Barra estabilizadora', t: 'texto' },
+    { n: 'Bieletas', t: 'texto' },
+    { n: 'Bujes', t: 'texto' },
+    { n: 'Parrillas de suspensión', t: 'texto' },
+    { n: 'Rulemanes', t: 'texto' }
+  ] };
+  const SEC_DISTRIB = { seccion: 'Distribución', items: [
+    { n: 'Correa de distribución', t: 'sino' },
+    { n: 'Tensores', t: 'sino' },
+    { n: 'Bomba de agua', t: 'sino' },
+    { n: 'Correa de accesorios', t: 'sino' },
+    { n: 'Tensores C/A', t: 'sino' }
+  ] };
+  const SEC_ENCENDIDO = { seccion: 'Encendido', items: [
+    { n: 'Bujías', t: 'texto' },
+    { n: 'Cables', t: 'texto' },
+    { n: 'Bobinas', t: 'texto' }
+  ] };
+  const SEC_ESCOBILLAS = { seccion: 'Escobillas', items: [
+    { n: 'Delanteras', t: 'texto' },
+    { n: 'Traseras', t: 'texto' }
+  ] };
+
+  const FICHAS = {
+    convencional: { nombre: 'Service convencional', secciones: [SEC_SERVICE, SEC_FLUIDOS, SEC_NEUMATICOS, SEC_LUCES, SEC_FRENOS] },
+    full: { nombre: 'Service full', secciones: [SEC_SERVICE, SEC_FLUIDOS, SEC_LUCES, SEC_TREN_DEL, SEC_TREN_TRAS, SEC_FRENOS, SEC_DISTRIB, SEC_NEUMATICOS, SEC_ENCENDIDO, SEC_ESCOBILLAS] }
+  };
 
   let cache = [];
   let vehiculos = [];
@@ -34,22 +98,20 @@
   let contActual = null;
 
   function fmtMoneda(n) { return '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 }); }
-  function fmtFecha(iso) {
-    if (!iso) return '';
-    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
+  function fmtFecha(iso) { return iso ? new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
+  function idHash() { const m = location.hash.match(/[?&]id=([^&]+)/); return m ? decodeURIComponent(m[1]) : null; }
+  function urlPublica(id) { return location.origin + location.pathname.replace(/[^/]*$/, '') + 'ficha.html?orden=' + id; }
 
   /* ---------- Datos ---------- */
   async function traer() {
     const { data, error } = await db.from('operaciones')
       .select('*, vehiculos(patente), clientes(nombre)')
-      .eq('tipo', 'taller')
-      .order('creado_en', { ascending: false });
+      .eq('tipo', 'taller').order('creado_en', { ascending: false });
     if (error) { toast('No se pudieron cargar las órdenes.', 'error'); return []; }
     return data || [];
   }
   async function traerVehiculos() {
-    const { data } = await db.from('vehiculos').select('id, patente, marca, modelo, cliente_id, clientes(nombre)').order('patente');
+    const { data } = await db.from('vehiculos').select('id, patente, marca, modelo, cliente_id, clientes(nombre, telefono)').order('patente');
     return data || [];
   }
   async function traerProductos() {
@@ -62,23 +124,16 @@
      ============================================================ */
   async function renderNueva(cont) {
     document.querySelectorAll('.mainnav a').forEach(a => a.classList.toggle('active', a.getAttribute('data-route') === 'taller'));
-
     cont.appendChild(el('div', { class: 'loading' }, 'Cargando…'));
-    if (!vehiculos.length || !productos.length) {
-      [vehiculos, productos] = await Promise.all([traerVehiculos(), traerProductos()]);
-    }
+    if (!vehiculos.length || !productos.length) { [vehiculos, productos] = await Promise.all([traerVehiculos(), traerProductos()]); }
     cont.innerHTML = '';
 
-    // Estado del formulario
     let vehiculoSel = null;
-    const estados = {};          // "Sección::Ítem" -> 'bien'|'regular'|'mal'
-    const obsSeccion = {};       // "Sección" -> texto observación
-    const aceite = { cambiado: null, tipo: '' };   // aceite motor
+    let tipoFicha = 'convencional';
+    const valores = {};          // "Sección::Ítem" -> texto | 'si' | 'no'
     let repuestos = [];
 
-    cont.appendChild(el('div', { class: 'detail-head' }, [
-      el('button', { class: 'back-link', onclick: () => { location.hash = '#/taller'; } }, '← Taller'),
-    ]));
+    cont.appendChild(el('div', { class: 'detail-head' }, [ el('button', { class: 'back-link', onclick: () => { location.hash = '#/taller'; } }, '← Taller') ]));
     cont.appendChild(el('div', { class: 'view-head' }, [ el('h1', {}, 'Nueva orden de trabajo') ]));
 
     /* --- Vehículo --- */
@@ -86,6 +141,7 @@
     const vehBusq = el('input', { type: 'text', class: 'search', placeholder: 'Buscar vehículo por patente…' });
     const vehResultados = el('div', { class: 'venta-resultados' });
     const vehBusqWrap = el('div', {}, [vehBusq, vehResultados]);
+    const inpTel = el('input', { id: 'o-tel', type: 'tel' });
 
     function pintarVeh() {
       vehResultados.innerHTML = '';
@@ -100,9 +156,8 @@
     }
     function elegirVeh(v) {
       vehiculoSel = v;
-      vehBusqWrap.hidden = true;
-      vehInfo.hidden = false;
-      vehInfo.innerHTML = '';
+      vehBusqWrap.hidden = true; vehInfo.hidden = false; vehInfo.innerHTML = '';
+      if (v.clientes && v.clientes.telefono) inpTel.value = v.clientes.telefono;
       vehInfo.appendChild(el('div', {}, [
         el('span', { class: 'patente-tag' }, v.patente),
         el('span', { style: 'margin-left:10px' }, [v.marca, v.modelo].filter(Boolean).join(' ')),
@@ -116,65 +171,63 @@
     cont.appendChild(vehBusqWrap);
     cont.appendChild(vehInfo);
 
-    /* --- Motivo + km --- */
+    /* --- Datos + tipo de ficha --- */
     cont.appendChild(el('div', { class: 'field-row', style: 'margin-top:16px' }, [
-      el('div', { class: 'field' }, [ el('label', { for: 'o-motivo' }, 'Motivo de ingreso'), el('input', { id: 'o-motivo', type: 'text', placeholder: 'ej. service, ruido en tren delantero…' }) ]),
+      el('div', { class: 'field' }, [ el('label', { for: 'o-dni' }, 'DNI'), el('input', { id: 'o-dni', type: 'text' }) ]),
+      el('div', { class: 'field' }, [ el('label', { for: 'o-tel' }, 'Teléfono'), inpTel ])
+    ]));
+    cont.appendChild(el('div', { class: 'field-row' }, [
+      el('div', { class: 'field' }, [ el('label', { for: 'o-motor' }, 'Motor'), el('input', { id: 'o-motor', type: 'text' }) ]),
       el('div', { class: 'field' }, [ el('label', { for: 'o-km' }, 'Kilometraje'), el('input', { id: 'o-km', type: 'number', min: '0' }) ])
     ]));
+    cont.appendChild(el('div', { class: 'field' }, [ el('label', { for: 'o-motivo' }, 'Motivo de ingreso'), el('input', { id: 'o-motivo', type: 'text', placeholder: 'ej. service, ruido…' }) ]));
 
-    /* --- Checklist --- */
+    const selTipo = el('select', { id: 'o-tipo' }, [
+      el('option', { value: 'convencional' }, 'Service convencional'),
+      el('option', { value: 'full' }, 'Service full')
+    ]);
+    cont.appendChild(el('div', { class: 'field' }, [ el('label', { for: 'o-tipo' }, 'Tipo de ficha' ), selTipo ]));
+
+    /* --- Checklist (se arma según el tipo) --- */
     cont.appendChild(el('h2', { class: 'section-title' }, 'Control del vehículo'));
     const chkWrap = el('div', { class: 'card', style: 'padding:4px 0' });
-
-    function botonesBRM(key) {
-      const btnsWrap = el('div', { class: 'chk-btns' });
-      ['bien', 'regular', 'mal'].forEach(estado => {
-        const b = el('button', { class: 'chk-btn chk-' + estado, type: 'button' }, estado === 'bien' ? 'B' : (estado === 'regular' ? 'R' : 'M'));
-        b.addEventListener('click', () => {
-          const yaEstaba = estados[key] === estado;
-          btnsWrap.querySelectorAll('.chk-btn').forEach(x => x.classList.remove('activo'));
-          if (yaEstaba) { delete estados[key]; } else { estados[key] = estado; b.classList.add('activo'); }
-        });
-        btnsWrap.appendChild(b);
-      });
-      return btnsWrap;
-    }
-
-    CHECKLIST.forEach(sec => {
-      chkWrap.appendChild(el('div', { class: 'chk-seccion' }, sec.seccion));
-      sec.items.forEach(item => {
-        if (item.tipo === 'aceite') {
-          // Aceite motor: Cambiado / No cambiado + qué aceite
-          const wrap = el('div', { class: 'chk-btns' });
-          const inpTipo = el('input', { type: 'text', class: 'chk-aceite-input', placeholder: '¿Qué aceite?', value: aceite.tipo });
-          inpTipo.addEventListener('input', () => { aceite.tipo = inpTipo.value; });
-          [['si', 'Cambiado'], ['no', 'No']].forEach(([val, txt]) => {
-            const b = el('button', { class: 'chk-btn chk-aceite chk-' + (val === 'si' ? 'bien' : 'mal'), type: 'button', style: 'width:auto;padding:0 12px' }, txt);
-            b.addEventListener('click', () => {
-              const ya = aceite.cambiado === val;
-              wrap.querySelectorAll('.chk-btn').forEach(x => x.classList.remove('activo'));
-              if (ya) { aceite.cambiado = null; } else { aceite.cambiado = val; b.classList.add('activo'); }
-            });
-            wrap.appendChild(b);
-          });
-          chkWrap.appendChild(el('div', { class: 'chk-fila' }, [ el('div', { class: 'chk-item' }, item.nombre), wrap ]));
-          chkWrap.appendChild(el('div', { class: 'chk-aceite-row' }, [inpTipo]));
-        } else {
-          const key = sec.seccion + '::' + item.nombre;
-          chkWrap.appendChild(el('div', { class: 'chk-fila' }, [ el('div', { class: 'chk-item' }, item.nombre), botonesBRM(key) ]));
-        }
-      });
-      // Observación de la sección
-      const obs = el('input', { type: 'text', class: 'chk-obs-input', placeholder: 'Observaciones de ' + sec.seccion.toLowerCase() + '…' });
-      obs.addEventListener('input', () => { obsSeccion[sec.seccion] = obs.value.trim() || undefined; });
-      chkWrap.appendChild(el('div', { class: 'chk-obs-row' }, [obs]));
-    });
     cont.appendChild(chkWrap);
 
-    cont.appendChild(el('div', { class: 'field', style: 'margin-top:12px' }, [
-      el('label', { for: 'o-obs' }, 'Observaciones generales'),
-      el('textarea', { id: 'o-obs', placeholder: 'Notas del control, recomendaciones…' }, '')
-    ]));
+    function botonesSiNo(key) {
+      const wrap = el('div', { class: 'chk-btns' });
+      [['si', 'Sí'], ['no', 'No']].forEach(([val, txt]) => {
+        const b = el('button', { class: 'chk-btn chk-' + (val === 'si' ? 'bien' : 'mal'), type: 'button', style: 'width:auto;padding:0 14px' + (valores[key] === val ? '' : '') }, txt);
+        if (valores[key] === val) b.classList.add('activo');
+        b.addEventListener('click', () => {
+          const ya = valores[key] === val;
+          wrap.querySelectorAll('.chk-btn').forEach(x => x.classList.remove('activo'));
+          if (ya) { delete valores[key]; } else { valores[key] = val; b.classList.add('activo'); }
+        });
+        wrap.appendChild(b);
+      });
+      return wrap;
+    }
+
+    function construirChecklist() {
+      chkWrap.innerHTML = '';
+      FICHAS[tipoFicha].secciones.forEach(sec => {
+        chkWrap.appendChild(el('div', { class: 'chk-seccion' }, sec.seccion));
+        sec.items.forEach(item => {
+          const key = sec.seccion + '::' + item.n;
+          if (item.t === 'sino') {
+            chkWrap.appendChild(el('div', { class: 'chk-fila' }, [ el('div', { class: 'chk-item' }, item.n), botonesSiNo(key) ]));
+          } else {
+            const inp = el('input', { type: 'text', class: 'chk-texto-input', value: valores[key] || '' });
+            inp.addEventListener('input', () => { valores[key] = inp.value.trim() || undefined; });
+            chkWrap.appendChild(el('div', { class: 'chk-fila' }, [ el('div', { class: 'chk-item' }, item.n), inp ]));
+          }
+        });
+      });
+    }
+    selTipo.addEventListener('change', () => { tipoFicha = selTipo.value; construirChecklist(); });
+    construirChecklist();
+
+    cont.appendChild(el('div', { class: 'field', style: 'margin-top:12px' }, [ el('label', { for: 'o-obs' }, 'Observaciones' ), el('textarea', { id: 'o-obs', placeholder: 'Notas, recomendaciones…' }, '') ]));
 
     /* --- Repuestos + mano de obra --- */
     cont.appendChild(el('h2', { class: 'section-title' }, 'Repuestos y mano de obra'));
@@ -237,19 +290,22 @@
       const km = document.getElementById('o-km').value;
       const motivo = document.getElementById('o-motivo').value.trim();
       const checklist = {
+        tipo: tipoFicha,
+        header: {
+          dni: document.getElementById('o-dni').value.trim() || null,
+          motor: document.getElementById('o-motor').value.trim() || null,
+          tel: inpTel.value.trim() || null
+        },
         motivo,
         observaciones: document.getElementById('o-obs').value.trim() || null,
-        estados,
-        obsSeccion,
-        aceite
+        valores
       };
 
       try {
         const { data: orden, error: e1 } = await db.from('operaciones').insert({
           tipo: 'taller', estado: 'pendiente',
           vehiculo_id: vehiculoSel.id, cliente_id: vehiculoSel.cliente_id || null, usuario_id,
-          descripcion: motivo || 'Orden de trabajo',
-          km_ingreso: km ? parseInt(km, 10) : null,
+          descripcion: motivo || 'Orden de trabajo', km_ingreso: km ? parseInt(km, 10) : null,
           total, checklist, cerrado_en: new Date().toISOString()
         }).select('id').single();
         if (e1 || !orden) throw e1 || new Error('orden');
@@ -280,7 +336,7 @@
   }
 
   /* ============================================================
-     LISTA DE ÓRDENES
+     LISTA
      ============================================================ */
   async function eliminar(o) {
     const ok = await confirmar('¿Eliminar esta orden de trabajo? (El stock descontado no se repone.)');
@@ -335,10 +391,7 @@
     wrap.appendChild(card);
   }
 
-  async function recargar() {
-    cache = await traer();
-    if (contActual) pintarLista(contActual);
-  }
+  async function recargar() { cache = await traer(); if (contActual) pintarLista(contActual); }
 
   async function render(cont) {
     contActual = cont;
@@ -350,32 +403,14 @@
       el('input', { class: 'search', type: 'text', placeholder: 'Buscar por patente, cliente o trabajo…', oninput: (e) => { filtro = e.target.value; pintarLista(cont); } })
     ]));
     cont.appendChild(el('div', { id: 'lista-ordenes' }, [ el('div', { class: 'loading' }, 'Cargando…') ]));
-
     [cache, vehiculos, productos] = await Promise.all([traer(), traerVehiculos(), traerProductos()]);
     pintarLista(cont);
   }
 
   /* ============================================================
-     FICHA DE SERVICE (interna, con QR / imprimir / WhatsApp)
+     FICHA DE SERVICE
      ============================================================ */
-  function idHash() {
-    const m = location.hash.match(/[?&]id=([^&]+)/);
-    return m ? decodeURIComponent(m[1]) : null;
-  }
-  function urlPublica(id) {
-    const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-    return base + 'ficha.html?orden=' + id;
-  }
-  function estadoTxt(e) { return e === 'bien' ? 'Bien' : (e === 'regular' ? 'Regular' : 'Mal'); }
-  function agruparEstados(estados) {
-    const g = {};
-    Object.entries(estados || {}).forEach(([k, v]) => {
-      const [sec, item] = k.split('::');
-      if (!g[sec]) g[sec] = [];
-      g[sec].push({ item, estado: v });
-    });
-    return g;
-  }
+  function valorTxt(t, v) { return t === 'sino' ? (v === 'si' ? 'Sí' : 'No') : v; }
 
   async function renderFicha(cont) {
     document.querySelectorAll('.mainnav a').forEach(a => a.classList.toggle('active', a.getAttribute('data-route') === 'taller'));
@@ -390,66 +425,55 @@
     cont.innerHTML = '';
 
     const v = o.vehiculos || {}, c = o.clientes || {}, chk = o.checklist || {};
-    const g = agruparEstados(chk.estados);
+    const header = chk.header || {};
+    const valores = chk.valores || {};
+    const tipoFicha = chk.tipo && FICHAS[chk.tipo] ? chk.tipo : 'convencional';
     const repuestos = (items || []).filter(i => i.tipo_item === 'producto');
     const mano = (items || []).filter(i => i.tipo_item === 'mano_obra');
     const url = urlPublica(o.id);
 
-    // Acciones (no se imprimen)
     cont.appendChild(el('div', { class: 'orden-acciones no-print' }, [
       el('button', { class: 'back-link', onclick: () => { location.hash = '#/taller'; } }, '← Taller'),
       el('div', { style: 'display:flex;gap:8px' }, [
-        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir / PDF'),
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir'),
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => ui.descargarPDF(document.getElementById('ficha-doc'), 'ficha-' + (o.numero_orden || '') + '.pdf') }, 'Descargar PDF'),
         c.telefono ? el('a', { class: 'btn btn-accent btn-sm', target: '_blank', rel: 'noopener',
           href: 'https://wa.me/' + (c.telefono || '').replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent('Ficha de service de tu vehículo ' + (v.patente || '') + ' — Paddock Car Center. Vela online: ' + url) }, 'WhatsApp') : null
       ])
     ]));
 
-    // Documento
-    const doc = el('div', { class: 'reporte-doc' });
+    const doc = el('div', { class: 'reporte-doc', id: 'ficha-doc' });
     doc.appendChild(el('div', { class: 'rep-head' }, [
       el('div', { class: 'od-brand' }, [ el('div', { class: 'od-brand-name' }, 'PADDOCK'), el('div', { class: 'od-brand-sub' }, 'Car Center') ]),
-      el('div', { class: 'rep-title' }, [ el('div', { class: 'od-title-txt' }, 'Ficha de Service'), o.numero_orden ? el('div', { class: 'od-numero' }, 'Orden N° ' + o.numero_orden) : null, el('div', { class: 'rep-fecha' }, fmtFecha(o.creado_en)) ])
+      el('div', { class: 'rep-title' }, [ el('div', { class: 'od-title-txt' }, 'Ficha de Service'), el('div', { class: 'rep-fecha' }, FICHAS[tipoFicha].nombre), o.numero_orden ? el('div', { class: 'od-numero' }, 'Orden N° ' + o.numero_orden) : null, el('div', { class: 'rep-fecha' }, fmtFecha(o.creado_en)) ])
     ]));
 
-    const datos = el('div', { class: 'od-datos' }, [
+    doc.appendChild(el('div', { class: 'od-datos' }, [
       el('div', {}, [ el('span', { class: 'od-lbl' }, 'Vehículo: '), el('strong', {}, v.patente || '—'), el('span', {}, ' ' + [v.marca, v.modelo, v.anio].filter(Boolean).join(' ')) ]),
       c.nombre ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cliente: '), c.nombre ]) : null,
+      header.dni ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'DNI: '), header.dni ]) : null,
+      header.tel ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Tel: '), header.tel ]) : null,
+      header.motor ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Motor: '), header.motor ]) : null,
       o.km_ingreso ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Kilometraje: '), Number(o.km_ingreso).toLocaleString('es-AR') + ' km' ]) : null,
       chk.motivo ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Motivo: '), chk.motivo ]) : null,
       (auth.esAdmin() && o.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cargó: '), o.usuarios_app.nombre ]) : null
-    ]);
-    doc.appendChild(datos);
+    ]));
 
-    // Checklist (recorremos la definición, mostrando lo que tenga dato)
-    const estados = chk.estados || {};
-    const obsSec = chk.obsSeccion || {};
-    const aceite = chk.aceite || {};
+    // Control del vehículo según el tipo de ficha
     const bloques = [];
-    CHECKLIST.forEach(sec => {
+    FICHAS[tipoFicha].secciones.forEach(sec => {
       const filas = [];
       sec.items.forEach(item => {
-        if (item.tipo === 'aceite') {
-          if (aceite.cambiado || aceite.tipo) {
-            const txt = (aceite.cambiado === 'si' ? 'Cambiado' : (aceite.cambiado === 'no' ? 'No cambiado' : '')) + (aceite.tipo ? ' — ' + aceite.tipo : '');
-            filas.push(el('div', { class: 'fs-item' }, [
-              el('span', {}, item.nombre),
-              el('span', { class: 'fs-estado ' + (aceite.cambiado === 'si' ? 'bien' : 'mal') }, txt.trim())
-            ]));
-          }
-        } else {
-          const est = estados[sec.seccion + '::' + item.nombre];
-          if (est) filas.push(el('div', { class: 'fs-item' }, [ el('span', {}, item.nombre), el('span', { class: 'fs-estado ' + est }, estadoTxt(est)) ]));
+        const val = valores[sec.seccion + '::' + item.n];
+        if (val) {
+          const esSino = item.t === 'sino';
+          filas.push(el('div', { class: 'fs-item' }, [
+            el('span', {}, item.n),
+            esSino ? el('span', { class: 'fs-estado ' + (val === 'si' ? 'bien' : 'mal') }, valorTxt('sino', val)) : el('span', { class: 'fs-val' }, val)
+          ]));
         }
       });
-      const obs = obsSec[sec.seccion];
-      if (filas.length || obs) {
-        bloques.push(el('div', {}, [
-          el('div', { class: 'fs-sec' }, sec.seccion),
-          ...filas,
-          obs ? el('div', { class: 'fs-obs' }, 'Obs: ' + obs) : null
-        ]));
-      }
+      if (filas.length) bloques.push(el('div', {}, [ el('div', { class: 'fs-sec' }, sec.seccion), ...filas ]));
     });
     if (bloques.length) {
       doc.appendChild(el('h2', { class: 'section-title' }, 'Control del vehículo'));
@@ -470,12 +494,8 @@
       doc.appendChild(el('div', { class: 'od-total' }, [ el('span', {}, 'TOTAL'), el('span', { class: 'od-total-monto' }, fmtMoneda(o.total)) ]));
     }
 
-    // QR a la ficha pública
     const qrBox = el('div', { class: 'fs-qr' });
-    try {
-      const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
-      qrBox.innerHTML = qr.createImgTag(4, 8);
-    } catch (e) { /* si la lib no cargó, no rompemos la ficha */ }
+    try { const qr = qrcode(0, 'M'); qr.addData(url); qr.make(); qrBox.innerHTML = qr.createImgTag(4, 8); } catch (e) {}
     qrBox.appendChild(el('div', { class: 'fs-qr-txt' }, 'Escaneá para ver esta ficha online'));
     doc.appendChild(qrBox);
 
