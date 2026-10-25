@@ -279,11 +279,7 @@
         ]),
         el('div', { class: 'field' }, [
           el('label', { for: 'venta-medio' }, 'Medio de pago'),
-          el('select', { id: 'venta-medio' }, [
-            el('option', { value: 'efectivo' }, 'Efectivo'),
-            el('option', { value: 'transferencia' }, 'Transferencia'),
-            el('option', { value: 'tarjeta' }, 'Tarjeta')
-          ])
+          el('select', { id: 'venta-medio' }, window.PADDOCK.opcionesMedios())
         ])
       ]),
       el('div', { class: 'venta-total-fila' }, [
@@ -372,7 +368,7 @@
     doc.appendChild(el('div', { class: 'od-datos' }, [
       el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFecha(op.creado_en) ]),
       cli.nombre ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cliente: '), cli.nombre ]) : null,
-      medio ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), medio ]) : null,
+      medio ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), window.PADDOCK.textoMedio(medio) ]) : null,
       (auth.esAdmin() && op.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cargó: '), op.usuarios_app.nombre ]) : null
     ]));
     const tabla = el('div', { class: 'od-facturas' }, [ el('div', { class: 'od-facturas-tit' }, 'Detalle') ]);

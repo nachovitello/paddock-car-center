@@ -86,12 +86,7 @@
         ]),
         el('div', { class: 'field' }, [
           el('label', { for: 'm-medio' }, 'Medio'),
-          el('select', { id: 'm-medio' }, [
-            el('option', { value: 'efectivo' }, 'Efectivo'),
-            el('option', { value: 'transferencia' }, 'Transferencia'),
-            el('option', { value: 'tarjeta' }, 'Tarjeta'),
-            el('option', { value: 'otro' }, 'Otro')
-          ])
+          el('select', { id: 'm-medio' }, window.PADDOCK.opcionesMedios().concat([el('option', { value: 'otro' }, 'Otro')]))
         ])
       ]),
       el('div', { class: 'field' }, [
@@ -155,12 +150,12 @@
       el('div', { class: 'caja-card saldo' }, [ el('span', { class: 'cc-lbl' }, 'Saldo'), el('span', { class: 'cc-val' }, fmtMoneda(t.saldo)) ])
     ]));
     // Desglose por medio (neto), en tarjetas claras
-    const fijos = ['efectivo', 'transferencia', 'tarjeta'];
+    const fijos = window.PADDOCK.MEDIOS_PAGO.map(m => m.valor);
     const extras = Object.keys(t.porMedio).filter(m => !fijos.includes(m) && Math.abs(t.porMedio[m]) > 0.01);
     const listaMedios = fijos.concat(extras);
     resumen.appendChild(el('div', { class: 'medios-grid' },
       listaMedios.map(medio => el('div', { class: 'medio-card' }, [
-        el('span', { class: 'medio-nombre' }, medio),
+        el('span', { class: 'medio-nombre' }, window.PADDOCK.textoMedio(medio)),
         el('span', { class: 'medio-val' }, fmtMoneda(t.porMedio[medio] || 0))
       ]))
     ));
@@ -182,7 +177,7 @@
       card.appendChild(el('div', { class: 'list-row' }, [
         el('div', { class: 'list-row-main' }, [
           el('div', { class: 'list-row-title' }, m.concepto || (esIng ? 'Ingreso' : 'Egreso')),
-          el('div', { class: 'list-row-sub' }, fmtHora(m.creado_en) + '  ·  ' + (m.medio_pago || 'otro') + (m.manual ? '  ·  manual' : '') + (auth.esAdmin() && m.usuarios_app ? '  ·  ' + m.usuarios_app.nombre : ''))
+          el('div', { class: 'list-row-sub' }, fmtHora(m.creado_en) + '  ·  ' + window.PADDOCK.textoMedio(m.medio_pago || 'otro') + (m.manual ? '  ·  manual' : '') + (auth.esAdmin() && m.usuarios_app ? '  ·  ' + m.usuarios_app.nombre : ''))
         ]),
         el('div', { class: 'caja-monto ' + (esIng ? 'ing' : 'egr') }, (esIng ? '+ ' : '− ') + fmtMoneda(m.monto)),
         el('div', { class: 'list-row-actions' }, [

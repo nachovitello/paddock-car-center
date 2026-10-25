@@ -46,11 +46,7 @@
   function abrirCobro(orden, onDone) {
     const saldo = saldoDe(orden);
     const inpMonto = el('input', { type: 'number', min: '0', step: '1', value: String(saldo), class: '' });
-    const selMedio = el('select', {}, [
-      el('option', { value: 'efectivo' }, 'Efectivo'),
-      el('option', { value: 'transferencia' }, 'Transferencia'),
-      el('option', { value: 'tarjeta' }, 'Tarjeta')
-    ]);
+    const selMedio = el('select', {}, window.PADDOCK.opcionesMedios());
     const hoy = new Date().toISOString().slice(0, 10);
 
     modal({
@@ -261,7 +257,7 @@
       'Cliente: ' + (cli.nombre || '') + '\n' +
       (veh.patente ? 'Vehículo: ' + veh.patente + '\n' : '') +
       'Monto: ' + fmtMoneda(cobro.monto) + '\n' +
-      'Medio: ' + (cobro.medio_pago || '') + '\n' +
+      'Medio: ' + window.PADDOCK.textoMedio(cobro.medio_pago) + '\n' +
       'Fecha: ' + fmtFechaD(cobro.fecha) + '\n¡Gracias!';
 
     cont.appendChild(el('div', { class: 'orden-acciones no-print' }, [
@@ -288,7 +284,7 @@
       veh.patente ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Vehículo: '), veh.patente ]) : null,
       op.numero_orden ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Orden: '), 'N° ' + op.numero_orden ]) : null,
       el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFechaD(cobro.fecha) ]),
-      el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), (cobro.medio_pago || '—') ]),
+      el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), window.PADDOCK.textoMedio(cobro.medio_pago) ]),
       op.descripcion ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Trabajo: '), op.descripcion ]) : null,
       (auth.esAdmin() && cobro.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cobró: '), cobro.usuarios_app.nombre ]) : null
     ]));

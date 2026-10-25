@@ -506,7 +506,7 @@
     const filas = [['Fecha', 'Tipo', 'Concepto', 'Medio', 'Monto']];
     (lista || []).forEach(m => filas.push([
       fmtFechaHora(m.creado_en), m.tipo === 'ingreso' ? 'Ingreso' : 'Egreso',
-      m.concepto || '', m.medio_pago || '', (m.tipo === 'ingreso' ? 1 : -1) * (Number(m.monto) || 0)
+      m.concepto || '', window.PADDOCK.textoMedio(m.medio_pago), (m.tipo === 'ingreso' ? 1 : -1) * (Number(m.monto) || 0)
     ]));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(filas), 'Caja');
@@ -544,7 +544,7 @@
         tabla.appendChild(el('div', { class: 'rep-tr rep-tr4' }, [
           el('div', {}, fmtFechaHora(m.creado_en)),
           el('div', {}, m.concepto || ''),
-          el('div', {}, m.medio_pago || ''),
+          el('div', {}, window.PADDOCK.textoMedio(m.medio_pago)),
           el('div', { class: esIng ? 'rep-ing' : 'rep-egr' }, (esIng ? '+ ' : '− ') + fmtMoneda(m.monto))
         ]));
       });

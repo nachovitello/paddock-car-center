@@ -90,11 +90,7 @@
       ]);
     });
 
-    const selMedio = el('select', { id: 'pago-medio' }, [
-      el('option', { value: 'transferencia' }, 'Transferencia'),
-      el('option', { value: 'efectivo' }, 'Efectivo'),
-      el('option', { value: 'tarjeta' }, 'Tarjeta')
-    ]);
+    const selMedio = el('select', { id: 'pago-medio' }, window.PADDOCK.opcionesMedios());
     const hoy = new Date().toISOString().slice(0, 10);
 
     const cuerpo = el('div', {}, [
@@ -213,7 +209,7 @@
       el('div', { class: 'od-datos' }, [
         el('div', {}, [ el('span', { class: 'od-lbl' }, 'Proveedor: '), el('strong', {}, prov.nombre || '—') ]),
         el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFecha(pago.fecha) ]),
-        el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), (pago.medio_pago || '—') ]),
+        el('div', {}, [ el('span', { class: 'od-lbl' }, 'Medio de pago: '), window.PADDOCK.textoMedio(pago.medio_pago) ]),
         (auth.esAdmin() && pago.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Registró: '), pago.usuarios_app.nombre ]) : null
       ]),
       el('div', { class: 'od-facturas' }, [
@@ -238,7 +234,7 @@
     lineas.push('Orden de pago N° ' + pago.numero);
     lineas.push('Proveedor: ' + (prov.nombre || ''));
     lineas.push('Fecha: ' + fmtFecha(pago.fecha));
-    lineas.push('Medio: ' + (pago.medio_pago || ''));
+    lineas.push('Medio: ' + window.PADDOCK.textoMedio(pago.medio_pago));
     lineas.push('');
     (aplic || []).forEach(a => {
       const f = a.compras;

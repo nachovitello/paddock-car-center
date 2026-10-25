@@ -133,11 +133,7 @@
     });
 
     // Condición de pago
-    const selMedio = el('select', { id: 'c-medio' }, [
-      el('option', { value: 'efectivo' }, 'Efectivo'),
-      el('option', { value: 'transferencia' }, 'Transferencia'),
-      el('option', { value: 'tarjeta' }, 'Tarjeta')
-    ]);
+    const selMedio = el('select', { id: 'c-medio' }, window.PADDOCK.opcionesMedios());
     const bloqueMedio = el('div', { class: 'field', hidden: true }, [
       el('label', { for: 'c-medio' }, 'Medio de pago'), selMedio
     ]);
