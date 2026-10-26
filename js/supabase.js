@@ -4,8 +4,8 @@
    (Supabase → Project Settings → API).
    ============================================================ */
 
-const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-const SUPABASE_ANON_KEY = 'TU-ANON-KEY';
+const SUPABASE_URL = 'https://myrmxcknwevoviuobmnu.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_yVAPEuojURZEUN9VAk6BUA_0dbGgaIG' ;
 
 // El CDN de supabase-js expone el global `supabase`. Creamos el cliente
 // una sola vez y lo compartimos por toda la app en PADDOCK.db
