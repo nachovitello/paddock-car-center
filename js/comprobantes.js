@@ -31,6 +31,8 @@
       q = db.from('operaciones').select('id, numero_orden, total, creado_en, estado, clientes(nombre), vehiculos(patente)').eq('tipo', 'taller');
     } else if (tab === 'ventas') {
       q = db.from('operaciones').select('id, numero_venta, total, creado_en, estado, clientes(nombre)').eq('tipo', 'venta');
+    } else if (tab === 'presupuestos') {
+      q = db.from('operaciones').select('id, numero_presupuesto, total, creado_en, clientes(nombre)').eq('tipo', 'presupuesto');
     } else {
       q = db.from('cobros').select('id, numero, monto, creado_en, anulado, clientes(nombre), operaciones(numero_orden)');
     }
@@ -45,7 +47,7 @@
   function coincide(row) {
     if (!texto) return true;
     const t = texto.toLowerCase();
-    const num = String(tab === 'ordenes' ? row.numero_orden : (tab === 'ventas' ? row.numero_venta : row.numero) || '');
+    const num = String((tab === 'ordenes' ? row.numero_orden : tab === 'ventas' ? row.numero_venta : tab === 'presupuestos' ? row.numero_presupuesto : row.numero) || '');
     const cli = row.clientes ? (row.clientes.nombre || '') : '';
     return num.includes(t) || cli.toLowerCase().includes(t);
   }
@@ -75,6 +77,11 @@
         titulo = numero;
         sub = cli + '  ·  ' + fmtFecha(row.creado_en);
         monto = row.total; destino = '#/ticket?id=' + row.id;
+      } else if (tab === 'presupuestos') {
+        numero = 'Presupuesto N° ' + (row.numero_presupuesto || '—');
+        titulo = numero;
+        sub = cli + '  ·  ' + fmtFecha(row.creado_en);
+        monto = row.total; destino = '#/presupuesto?id=' + row.id;
       } else {
         numero = 'Recibo N° ' + (row.numero || '—');
         titulo = numero;
@@ -104,7 +111,7 @@
 
   function barra(cont) {
     const mkTab = (id, txt) => el('button', { class: 'btn btn-sm ' + (tab === id ? 'btn-primary' : 'btn-ghost'), onclick: () => { tab = id; render(cont); } }, txt);
-    return el('div', { class: 'comp-tabs' }, [ mkTab('ordenes', 'Órdenes'), mkTab('recibos', 'Recibos'), mkTab('ventas', 'Ventas') ]);
+    return el('div', { class: 'comp-tabs' }, [ mkTab('ordenes', 'Órdenes'), mkTab('recibos', 'Recibos'), mkTab('ventas', 'Ventas'), mkTab('presupuestos', 'Presupuestos') ]);
   }
 
   async function render(cont) {

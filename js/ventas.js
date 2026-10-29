@@ -16,6 +16,7 @@
   let venta = [];       // carrito: { producto_id, nombre, precio_unit, cantidad, stock }
   let contActual = null;
   let filtroBusq = '';
+  let modo = 'venta';   // 'venta' | 'presupuesto'
 
   function fmtMoneda(n) {
     if (n == null) return '$0';
@@ -240,14 +241,18 @@
   async function render(cont) {
     contActual = cont;
     cont.innerHTML = '';
-    cont.appendChild(el('div', { class: 'view-head' }, [ el('h1', {}, 'Nueva venta') ]));
-
-    if (!productos.length) cont.appendChild(el('div', { class: 'loading' }, 'Cargando catálogo…'));
+    const esPres = modo === 'presupuesto';
+    cont.appendChild(el('div', { class: 'loading' }, 'Cargando catálogo…'));
     [productos, clientes] = await Promise.all([traerProductos(), traerClientes()]);
     cont.innerHTML = '';
+
     cont.appendChild(el('div', { class: 'view-head' }, [
-      el('h1', {}, 'Nueva venta'),
-      el('button', { class: 'btn btn-ghost', onclick: () => window.PADDOCK.reportes.abrirVentas() }, 'Reporte')
+      el('h1', {}, esPres ? 'Nuevo presupuesto' : 'Nueva venta'),
+      el('div', { class: 'head-actions' }, [
+        el('button', { class: 'btn btn-ghost', onclick: () => { modo = esPres ? 'venta' : 'presupuesto'; venta = []; render(cont); } },
+          esPres ? '← Volver a venta' : 'Hacer presupuesto'),
+        esPres ? null : el('button', { class: 'btn btn-ghost', onclick: () => window.PADDOCK.reportes.abrirVentas() }, 'Reporte')
+      ])
     ]));
 
     // Buscador
@@ -270,29 +275,54 @@
     const opcCliente = [el('option', { value: '' }, '— Sin cliente —')];
     clientes.forEach(c => opcCliente.push(el('option', { value: c.id }, c.nombre)));
 
-    // Pie de venta
+    // Pie: en presupuesto no hay medio de pago
+    const campos = esPres
+      ? [ el('div', { class: 'field' }, [ el('label', { for: 'venta-cliente' }, 'Cliente (opcional)'), el('select', { id: 'venta-cliente' }, opcCliente) ]) ]
+      : [ el('div', { class: 'field' }, [ el('label', { for: 'venta-cliente' }, 'Cliente (opcional)'), el('select', { id: 'venta-cliente' }, opcCliente) ]),
+          el('div', { class: 'field' }, [ el('label', { for: 'venta-medio' }, 'Medio de pago'), el('select', { id: 'venta-medio' }, window.PADDOCK.opcionesMedios()) ]) ];
+
     cont.appendChild(el('div', { class: 'venta-pie card' }, [
-      el('div', { class: 'field-row' }, [
-        el('div', { class: 'field' }, [
-          el('label', { for: 'venta-cliente' }, 'Cliente (opcional)'),
-          el('select', { id: 'venta-cliente' }, opcCliente)
-        ]),
-        el('div', { class: 'field' }, [
-          el('label', { for: 'venta-medio' }, 'Medio de pago'),
-          el('select', { id: 'venta-medio' }, window.PADDOCK.opcionesMedios())
-        ])
-      ]),
+      el('div', { class: 'field-row' }, campos),
       el('div', { class: 'venta-total-fila' }, [
         el('span', { class: 'vt-label' }, 'Total'),
         el('span', { id: 'venta-total', class: 'vt-monto' }, '$0')
       ]),
       el('button', {
         id: 'venta-cerrar', class: 'btn btn-primary btn-block', disabled: true,
-        onclick: cerrarVenta
-      }, 'Cerrar venta')
+        onclick: esPres ? guardarPresupuesto : cerrarVenta
+      }, esPres ? 'Guardar presupuesto' : 'Cerrar venta')
     ]));
 
     repintar();
+  }
+
+  /* ---------- Guardar presupuesto (no toca stock ni caja) ---------- */
+  async function guardarPresupuesto() {
+    if (!venta.length) return;
+    const btn = document.getElementById('venta-cerrar');
+    const clienteId = document.getElementById('venta-cliente').value || null;
+    const montoTotal = total();
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    const usuario_id = (auth.sesion() || {}).id || null;
+    try {
+      const { data: op, error: e1 } = await db.from('operaciones').insert({
+        tipo: 'presupuesto', estado: 'presupuesto', cliente_id: clienteId, usuario_id,
+        descripcion: 'Presupuesto', total: montoTotal
+      }).select('id, numero_presupuesto').single();
+      if (e1 || !op) throw e1 || new Error('op');
+      const items = venta.map(l => ({
+        operacion_id: op.id, tipo_item: 'producto', producto_id: l.producto_id,
+        descripcion: l.nombre, cantidad: l.cantidad, precio_unit: l.precio_unit, subtotal: l.precio_unit * l.cantidad
+      }));
+      const { error: e2 } = await db.from('operacion_items').insert(items);
+      if (e2) throw e2;
+      toast('Presupuesto N° ' + (op.numero_presupuesto || '') + ' guardado.', 'ok');
+      venta = [];
+      location.hash = '#/presupuesto?id=' + op.id;
+    } catch (err) {
+      toast('No se pudo guardar el presupuesto.', 'error');
+      btn.disabled = false; btn.textContent = 'Guardar presupuesto';
+    }
   }
 
   /* ---------- Ticket / comprobante de venta ---------- */
@@ -382,6 +412,68 @@
     cont.appendChild(doc);
   }
 
+  /* ---------- Documento de presupuesto ---------- */
+  async function renderPresupuesto(cont) {
+    cont.innerHTML = '';
+    document.querySelectorAll('.mainnav a').forEach(a => a.classList.toggle('active', a.getAttribute('data-route') === 'ventas'));
+    const id = idHash();
+    cont.appendChild(el('div', { class: 'loading' }, 'Cargando presupuesto…'));
+
+    const { data: op } = await db.from('operaciones')
+      .select('*, clientes(nombre, telefono), usuarios_app(nombre)')
+      .eq('id', id).maybeSingle();
+    if (!op) { cont.innerHTML = ''; cont.appendChild(el('div', { class: 'empty' }, [el('div', { class: 'empty-title' }, 'Presupuesto no encontrado')])); return; }
+    const { data: items } = await db.from('operacion_items').select('*').eq('operacion_id', id);
+    cont.innerHTML = '';
+
+    const cli = op.clientes || {};
+    const nro = op.numero_presupuesto || '—';
+    const textoWpp = 'Presupuesto N° ' + nro + ' — Paddock Car Center\n' +
+      'Fecha: ' + fmtFecha(op.creado_en) + '\nTotal: ' + fmtMoneda(op.total) + '\nPresupuesto válido por 15 días.';
+
+    async function eliminar() {
+      if (!auth.esAdmin()) { toast('Solo el admin puede eliminar.', 'error'); return; }
+      const ok = await confirmar('¿Eliminar el presupuesto N° ' + nro + '?', 'Eliminar');
+      if (!ok) return;
+      await db.from('operaciones').delete().eq('id', op.id);
+      toast('Presupuesto eliminado.', 'ok');
+      location.hash = '#/ventas';
+    }
+
+    cont.appendChild(el('div', { class: 'orden-acciones no-print' }, [
+      el('button', { class: 'back-link', onclick: () => { location.hash = '#/ventas'; } }, '← Ventas'),
+      el('div', { style: 'display:flex;gap:8px' }, [
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => window.print() }, 'Imprimir'),
+        el('button', { class: 'btn btn-ghost btn-sm', onclick: () => ui.descargarPDF(doc, 'presupuesto-' + nro + '.pdf') }, 'Descargar PDF'),
+        cli.telefono ? el('a', { class: 'btn btn-accent btn-sm', target: '_blank', rel: 'noopener',
+          href: 'https://wa.me/' + (cli.telefono || '').replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(textoWpp) }, 'WhatsApp') : null,
+        auth.esAdmin() ? el('button', { class: 'btn btn-danger btn-sm', onclick: eliminar }, 'Eliminar') : null
+      ])
+    ]));
+
+    const doc = el('div', { class: 'orden-doc' });
+    doc.appendChild(el('div', { class: 'od-head' }, [
+      el('div', { class: 'od-brand' }, [ el('div', { class: 'od-brand-name' }, 'PADDOCK'), el('div', { class: 'od-brand-sub' }, 'Car Center') ]),
+      el('div', { class: 'od-title' }, [ el('div', { class: 'od-title-txt' }, 'Presupuesto'), el('div', { class: 'od-numero' }, 'N° ' + nro) ])
+    ]));
+    doc.appendChild(el('div', { class: 'od-datos' }, [
+      el('div', {}, [ el('span', { class: 'od-lbl' }, 'Fecha: '), fmtFecha(op.creado_en) ]),
+      cli.nombre ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Cliente: '), cli.nombre ]) : null,
+      (auth.esAdmin() && op.usuarios_app) ? el('div', {}, [ el('span', { class: 'od-lbl' }, 'Hizo: '), op.usuarios_app.nombre ]) : null
+    ]));
+    const tabla = el('div', { class: 'od-facturas' }, [ el('div', { class: 'od-facturas-tit' }, 'Detalle' ) ]);
+    (items || []).forEach(it => tabla.appendChild(el('div', { class: 'od-fila' }, [
+      el('div', {}, it.descripcion + ' x' + it.cantidad),
+      el('div', { class: 'od-monto' }, fmtMoneda(it.subtotal))
+    ])));
+    doc.appendChild(tabla);
+    doc.appendChild(el('div', { class: 'od-total' }, [ el('span', {}, 'TOTAL' ), el('span', { class: 'od-total-monto' }, fmtMoneda(op.total)) ]));
+    doc.appendChild(el('div', { class: 'od-notas' }, 'Presupuesto válido por 15 días. No constituye comprobante de pago ni factura.'));
+    doc.appendChild(el('div', { class: 'fs-pie' }, 'Gracias por confiar en Paddock Car Center'));
+    cont.appendChild(doc);
+  }
+
   router.registrar('ventas', render);
   router.registrar('ticket', renderTicket);
+  router.registrar('presupuesto', renderPresupuesto);
 })();
