@@ -5,13 +5,17 @@
    ============================================================ */
 window.PADDOCK = window.PADDOCK || {};
 window.PADDOCK.CATEGORIAS_GASTO = [
-  'Compra de productos',
+  'Costo mercaderia vendida',
   'Alquiler',
   'Servicios',
   'Sueldos',
   'Impuestos y tasas',
   'Mantenimiento',
   'Insumos',
+  'Marketing',
+  'Logistica',
+  'Honorarios Profesionales',
+  'Prestamos y deudas',
   'Otros'
 ];
 
