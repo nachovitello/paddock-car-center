@@ -161,6 +161,7 @@
         el('div', { class: 'field' }, [ el('label', { for: 'c-numero' }, 'N° de comprobante'), el('input', { id: 'c-numero', type: 'text' }) ]),
         el('div', { class: 'field' }, [ el('label', { for: 'c-fecha' }, 'Fecha'), el('input', { id: 'c-fecha', type: 'date', value: hoy }) ])
       ]),
+      el('div', { class: 'field' }, [ el('label', { for: 'c-categoria' }, 'Categoría del gasto'), el('select', { id: 'c-categoria' }, window.PADDOCK.opcionesCategorias('Compra de productos')) ]),
       el('div', { class: 'field' }, [ el('label', { for: 'c-condicion' }, 'Condición'), selCondicion ]),
       bloqueMedio,
       el('div', { class: 'field' }, [ el('label', { for: 'c-afecta' }, '¿Afecta el stock?'), selAfecta ]),
@@ -190,6 +191,7 @@
         }
 
         const contado = selCondicion.value === 'contado';
+        const categoria = document.getElementById('c-categoria').value || null;
         const usuario_id = (auth.sesion() || {}).id || null;
         const archivo = document.getElementById('c-archivo').files[0];
 
@@ -209,6 +211,7 @@
           afecta_stock: afecta,
           archivo_url,
           estado: contado ? 'pagada' : 'pendiente',
+          categoria,
           notas: document.getElementById('c-notas').value.trim() || null,
           usuario_id
         }).select('id, numero').single();

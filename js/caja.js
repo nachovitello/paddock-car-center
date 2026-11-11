@@ -67,14 +67,20 @@
 
   /* ---------- Movimiento manual ---------- */
   function abrirForm() {
+    const selTipo = el('select', { id: 'm-tipo' }, [
+      el('option', { value: 'egreso' }, 'Egreso (gasto / retiro)'),
+      el('option', { value: 'ingreso' }, 'Ingreso (entrada de plata)')
+    ]);
+    const campoCategoria = el('div', { class: 'field' }, [
+      el('label', { for: 'm-categoria' }, 'Categoría del gasto'),
+      el('select', { id: 'm-categoria' }, window.PADDOCK.opcionesCategorias('Otros'))
+    ]);
+    // La categoría solo aplica a egresos (gastos).
+    selTipo.addEventListener('change', () => { campoCategoria.hidden = selTipo.value !== 'egreso'; });
+
     const cuerpo = el('div', {}, [
-      el('div', { class: 'field' }, [
-        el('label', { for: 'm-tipo' }, 'Tipo'),
-        el('select', { id: 'm-tipo' }, [
-          el('option', { value: 'egreso' }, 'Egreso (gasto / retiro)'),
-          el('option', { value: 'ingreso' }, 'Ingreso (entrada de plata)')
-        ])
-      ]),
+      el('div', { class: 'field' }, [ el('label', { for: 'm-tipo' }, 'Tipo'), selTipo ]),
+      campoCategoria,
       el('div', { class: 'field' }, [
         el('label', { for: 'm-concepto' }, 'Concepto'),
         el('input', { id: 'm-concepto', type: 'text', placeholder: 'ej. pago de luz, retiro, etc.' })
@@ -111,11 +117,13 @@
           ? new Date().toISOString()
           : new Date(fecha + 'T12:00:00').toISOString();
 
+        const tipoMov = document.getElementById('m-tipo').value;
         const { error } = await db.from('movimientos_caja').insert({
-          tipo: document.getElementById('m-tipo').value,
+          tipo: tipoMov,
           monto,
           medio_pago: document.getElementById('m-medio').value,
           concepto,
+          categoria: tipoMov === 'egreso' ? (document.getElementById('m-categoria').value || null) : null,
           manual: true,
           usuario_id: (auth.sesion() || {}).id || null,
           creado_en
@@ -177,7 +185,7 @@
       card.appendChild(el('div', { class: 'list-row' }, [
         el('div', { class: 'list-row-main' }, [
           el('div', { class: 'list-row-title' }, m.concepto || (esIng ? 'Ingreso' : 'Egreso')),
-          el('div', { class: 'list-row-sub' }, fmtHora(m.creado_en) + '  ·  ' + window.PADDOCK.textoMedio(m.medio_pago || 'otro') + (m.manual ? '  ·  manual' : '') + (auth.esAdmin() && m.usuarios_app ? '  ·  ' + m.usuarios_app.nombre : ''))
+          el('div', { class: 'list-row-sub' }, fmtHora(m.creado_en) + '  ·  ' + window.PADDOCK.textoMedio(m.medio_pago || 'otro') + (m.categoria ? '  ·  ' + m.categoria : '') + (m.manual ? '  ·  manual' : '') + (auth.esAdmin() && m.usuarios_app ? '  ·  ' + m.usuarios_app.nombre : ''))
         ]),
         el('div', { class: 'caja-monto ' + (esIng ? 'ing' : 'egr') }, (esIng ? '+ ' : '− ') + fmtMoneda(m.monto)),
         el('div', { class: 'list-row-actions' }, [
