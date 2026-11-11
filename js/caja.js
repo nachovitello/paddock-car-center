@@ -135,6 +135,24 @@
     });
   }
 
+  // Asignar / cambiar la categoría de un gasto ya cargado.
+  function editarCategoria(m) {
+    const sel = el('select', { id: 'ec-cat' }, window.PADDOCK.opcionesCategorias(m.categoria || 'Otros'));
+    modal({
+      titulo: 'Categoría del gasto',
+      cuerpo: el('div', {}, [
+        el('div', { class: 'field' }, [ el('label', { for: 'ec-cat' }, m.concepto || 'Gasto'), sel ])
+      ]),
+      textoGuardar: 'Guardar',
+      onGuardar: async () => {
+        const { error } = await db.from('movimientos_caja').update({ categoria: sel.value || null }).eq('id', m.id);
+        if (error) { toast('No se pudo guardar.', 'error'); return false; }
+        toast('Categoría asignada.', 'ok');
+        recargar();
+      }
+    });
+  }
+
   async function eliminar(m) {
     if (!m.manual) { toast('Los movimientos automáticos no se borran desde la caja.', 'error'); return; }
     const ok = await confirmar('¿Eliminar este movimiento manual?');
@@ -189,6 +207,7 @@
         ]),
         el('div', { class: 'caja-monto ' + (esIng ? 'ing' : 'egr') }, (esIng ? '+ ' : '− ') + fmtMoneda(m.monto)),
         el('div', { class: 'list-row-actions' }, [
+          (m.manual && !esIng) ? el('button', { class: 'btn btn-ghost btn-sm', onclick: () => editarCategoria(m) }, 'Categoría') : null,
           m.manual ? el('button', { class: 'btn btn-danger btn-sm', onclick: () => eliminar(m) }, 'Borrar') : null
         ])
       ]));
